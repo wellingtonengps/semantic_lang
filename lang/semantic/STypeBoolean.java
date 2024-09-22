@@ -3,7 +3,8 @@
  * Wellington Pereira Silva (201935041)
  */
 package lang.semantic;
-// Define o tipo booleano para a analise Semantica no TypeCheckVisitor
+
+
 public class STypeBoolean extends SType{
     private static STypeBoolean st = new STypeBoolean();
 

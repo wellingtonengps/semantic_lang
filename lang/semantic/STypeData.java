@@ -3,7 +3,8 @@
  * Wellington Pereira Silva (201935041)
  */
 package lang.semantic;
-// Define o tipo data para a analise semantica no TypeCheckVisitor
+
+
 public class STypeData extends SType{
     private String name;
 

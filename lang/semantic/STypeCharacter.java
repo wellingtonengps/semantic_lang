@@ -4,7 +4,6 @@
  */
 package lang.semantic;
 
-// Define o tipo char para a analise semantica no TypeCheckVisitor
 public class STypeCharacter extends SType {
 
     private static STypeCharacter st = new STypeCharacter();

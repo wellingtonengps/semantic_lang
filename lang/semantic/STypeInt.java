@@ -5,7 +5,6 @@
 
 package lang.semantic;
 
-// Define o tipo int para a analise semantica no TypeCheckVisitor
 public class STypeInt extends SType {
 
     private static STypeInt st = new STypeInt();

@@ -4,7 +4,6 @@
  */
 package lang.semantic;
 
-// Define o tipo float para a analise semantica no TypeCheckVisitor
 public class STypeFloat extends SType{
     private static STypeFloat st = new STypeFloat();
 

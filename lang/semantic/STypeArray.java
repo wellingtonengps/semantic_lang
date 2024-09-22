@@ -4,7 +4,6 @@
  */
 package lang.semantic;
 
-// Define o tipo array para a analise semantica no TypeCheck
 public class STypeArray extends SType{
     private SType a;
 

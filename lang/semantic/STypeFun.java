@@ -4,7 +4,7 @@
  */
 package lang.semantic;
 
-// Define os tipos de função para a analise semantica no TypeCheckVisitor
+
 public class STypeFun extends SType {
     private String id;                  // Nome da função
     private SType parameterType[];      // Tipos do parametro

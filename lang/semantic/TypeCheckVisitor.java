@@ -13,7 +13,6 @@ import java.util.Stack;
 import lang.interpreter.Visitor;
 import lang.ast.*;
 
-// Define o visitor que fará a analise semantica 
 public class TypeCheckVisitor extends Visitor {
     private STypeInt tyInt = STypeInt.newSTyInt();
     private STypeFloat tyFloat = STypeFloat.newSTyFloat();
@@ -22,32 +21,27 @@ public class TypeCheckVisitor extends Visitor {
     private STypeNull tyNull = STypeNull.newSTyNull();
     private STypeError tyErr = STypeError.newSTyErr();
 
-    // Armazena as mensagens de erro
+    // Armazena errors
     private ArrayList<String> logError;
 
-    // Armazena o ambiente das funções
+    // Armazena ambiente
     private Env<LocalAmbiente<SType>> env;
 
-    // Ambiente temporario da função para executar os comandos
+    // Ambiente de funções
     private LocalAmbiente<SType> temp;
 
-    // Pilha de tipos da linguagem lang
+    // Stack de tipos
     private Stack<SType> stk;
 
-    // Retorno de função => Se o retorno for acionado não deve ser feito os outros
-    // comandos da função
     private boolean retChk;
 
-    // armazena os dados do tipo data
-    private HashMap<String, DataAttributes> datas; // (Nome do tipo, Atributos e seus tipos)
+    // Armazena tipo Data
+    private HashMap<String, DataAttributes> datas;
 
-    // Objeto que pega valor numerico, usado pra saber qual retorno de função para checar os tipos
-    // tipo func(1, 2)[1];  // Qual será o tipo do indice 1
     private Object positionReturnFunction;
 
-    // Armzanena as Funcoes para poder compara os tipos na sobrecarga
+    // Armzanena funcs para checagem de tipo (sobrecarga)
     private ArrayList<Function> funcs;
-
 
     public TypeCheckVisitor() {
         stk = new Stack<SType>();
@@ -62,25 +56,25 @@ public class TypeCheckVisitor extends Visitor {
         return logError.size();
     }
 
+    // Método para formatar mensagem de erro
+    private String formatError(int linha, int coluna, String message) {
+        return "Em [" + linha + ":" + coluna + "]: " + message;
+    }
+
     public void printErrors() {
-        System.out.println("-------------- ERROS DE TIPO -----------\n");
+        System.out.println("- Error de Tipo -\n");
         int indice = 1;
         for (String s : logError) {
-            System.out.println("=> " + (indice < 10 ? "0" + indice : indice) + ") - " + s);
+            System.out.println((indice < 10 ? "0" + indice : indice) + " - " + s);
             indice++;
         }
         System.out.println("\n--------------------------------------");
     }
 
-    // https://www.techiedelight.com/get-current-line-number-java/
-    // Retorna a linha do código fonte ao passar pela instrução
     public int getLineNumber(){
-        // return new Throwable().getStackTrace()[0].getLineNumber();
         return Thread.currentThread().getStackTrace()[2].getLineNumber();
     }
 
-    // Retorna a lista de funções da arvore AST com base no nome
-    // Para comparar a sobrecarga no FunctionReturn e FunctionCall
     public ArrayList<Function> getFunctionAST(String nome){
         ArrayList<Function> funcoesAST = new ArrayList<Function>();
         for(Function f : funcs){
@@ -99,17 +93,14 @@ public class TypeCheckVisitor extends Visitor {
         if(funcoes == null){ // Logo nao existe a funcao na base ainda e portanto ela é valida
             return true;
         }
-        else{   
-        // Existe na base funcoes com o mesmo nome agora teremos que conferir 
-        // os dados da funcao para ver se uma funcao igual existe
-
+        else{
             for(int i = 0; i < funcoes.size(); i++){
                 LocalAmbiente<SType> funcaoBase = funcoes.get(i);
                 STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
                 STypeFun funcaoNovaTipo = (STypeFun)funcaoNova.getFuncType();
                 if(funcaoBaseTipo.getTypes().length == funcaoNovaTipo.getTypes().length){
                     boolean isDifferentType = false;
-                    // testa o casamento de todos os tipos
+
                     for(int j = 0; j < funcaoBaseTipo.getTypes().length; j++){
                         // se for diferente
                         if(!(funcaoBaseTipo.getTypes()[j].match(funcaoNovaTipo.getTypes()[j]))){
@@ -118,7 +109,7 @@ public class TypeCheckVisitor extends Visitor {
                         }
                     }
                     if(!isDifferentType){
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + linha + ", coluna: " + coluna + "): Ambiguidade na funcao \'" + funcaoBase.getFuncID() + "\' pois a nova funcao tem a mesma quantidade de parametros e tipos iguais e o mesmo nome de uma funcao que ja existe !!!");
+                        logError.add(formatError(linha, coluna, "Ambiguidade na funcao " + funcaoBase.getFuncID()));
                         stk.push(tyErr);
                         isValid = false;
                     }
@@ -144,13 +135,13 @@ public class TypeCheckVisitor extends Visitor {
         for(Function f : p.getFunctions()){
             if(f.getId().equals("main")){   // Checa se a funcao main já existe
                 if(env.getFuncoes(f.getId()).size() > 0){ // Tenta sobrecarregar a funcao main
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): A funcao \'" + main + "\' deve ser UNICA com esse nome e nao deve ter sobrecarga de funcoes com seu nome !");
+                    logError.add(formatError(f.getLine(), f.getColumn(), "Permitido apenas uma função " + main));
                     stk.push(tyErr);
                     checaMain = true;
                 }   
             }
 
-            if(checaMain){  // Se tentou sobrecarregar a funcao main ==> Continua e ignora a funcao de sobrecarga
+            if(checaMain){  // Ignora a função de sobrecarga da main
                 checaMain = false;
                 continue;
             }
@@ -172,7 +163,7 @@ public class TypeCheckVisitor extends Visitor {
                     for(int j = 0; j <= i; j++){
                         // Compara todos e garante que nao compara o parametro com ele mesmo
                         if(namesParameter[j].equals(f.getParameters().getSingleId(i)) & i != j){
-                            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): Os parametros \'" + f.getParameters().getSingleParameterToString(j) + "\' e \'"+f.getParameters().getSingleParameterToString(i) +"\' tem nomes iguais para as variaveis!");
+                            logError.add(formatError(f.getLine(), f.getColumn(), "Os parametros " + f.getParameters().getSingleParameterToString(j) + " e " +f.getParameters().getSingleParameterToString(i) +"\' tem variáveis com mesmo nome"));
                             stk.push(tyErr);
                             break;
                         }
@@ -211,7 +202,7 @@ public class TypeCheckVisitor extends Visitor {
                 
                 // Certifica que a funcao main nao deve ter parametros
                 if(((Parameters)f.getParameters()).getType().size() != 0){
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): A funcao \'main\' nao pode ter parametros na sua declaracao !");
+                    logError.add(formatError(f.getLine(), f.getColumn(),"A funcao \'main\' nao pode ter parametros"));
                     stk.push(tyErr);
                 }
                 main = f;
@@ -219,7 +210,7 @@ public class TypeCheckVisitor extends Visitor {
         }
 
         if (main == null) {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + p.getLine() + ", coluna: " + p.getColumn() + "): Nao ha a funcao chamada \'main\' !");
+            logError.add(formatError(p.getLine(), p.getColumn(), "Nao ha a funcao chamada \'main\'"));
             stk.push(tyErr);
         }
     }
@@ -228,7 +219,7 @@ public class TypeCheckVisitor extends Visitor {
     @Override
     public void visit(Data d) {
         if (datas.get(d.getId()) != null) { // Tentativa de adicionar dois datas com mesmo nome
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): O tipo data \'" + d.getId() + "\' ja existe !");
+            logError.add(formatError(d.getLine(), d.getColumn(), "O tipo data \'" + d.getId() + "\' ja existe !"));
             stk.push(tyErr);
         } else {
             ArrayList<String> variaveis = new ArrayList<String>();
@@ -238,8 +229,7 @@ public class TypeCheckVisitor extends Visitor {
                 // verificando campos com mesmo nome
                 for (int i = 0; i < variaveis.size(); i++) {
                     if (variaveis.get(i).equals(declaration.getId())) {
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): O campo \'" + declaration.getId()
-                            + "\' do tipo de data \'" + d.getId() + "\' ja foi definido.");
+                        logError.add(formatError(d.getLine(), d.getColumn(), "Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): O campo \'" + declaration.getId() + "\' do tipo de data \'" + d.getId() + "\' ja foi definido."));
                         stk.push(tyErr);
                     }
                 }
@@ -322,11 +312,11 @@ public class TypeCheckVisitor extends Visitor {
 
         if (!retChk && tiposRetornoPadrao.length > 0) {
             if(verificacaoIf){
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): Na funcao \'" + f.getId() + "\' falta um estado de retorno depois do ultimo comando \'if\' !");
+                logError.add(formatError(f.getLine(), f.getColumn(), "Em \'" + f.getId() + "\' falta um estado de retorno!"));
                 stk.push(tyErr);
             }
             else{
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): Funcao " + f.getId() + " deve retornar algum valor.");
+                logError.add(formatError(f.getLine(), f.getColumn(), "Funcao \" + f.getId() + \" deve retornar algum valor."));
                 stk.push(tyErr);
             }   
         }
@@ -338,13 +328,10 @@ public class TypeCheckVisitor extends Visitor {
         // Nao faz nada pois já foi tratado em outra funcao
     }
 
-    // Partem do Type
     @Override
     public void visit(TypeArray t) {
         if(t.getType() instanceof NameType && datas.get(((NameType)t.getType()).getID()) == null){ // Tipo data nao existe
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " 
-            + t.getColumn() + "): O tipo data \'" + t.getType() 
-            + "\' nao existe para poder ser criado um array.");
+            logError.add(formatError(t.getLine(), t.getColumn(), " O tipo data " + t.getType() + " nao existe para poder ser criado um array"));
             stk.push(tyErr);
         }
         else{
@@ -356,16 +343,12 @@ public class TypeCheckVisitor extends Visitor {
                     stk.push(array);
                 }
                 else{
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " 
-                    + t.getColumn() + "): O tipo data \'" + ((STypeData)tipo).getName()
-                    + "\' nao existe para poder se criar um array.");
+                    logError.add(formatError(t.getLine(), t.getColumn(), "O tipo data " + ((STypeData)tipo).getName() + " nao existe"));
                     stk.push(tyErr);
                 }
             }
             else if(tipo instanceof STypeError){
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " 
-                + t.getColumn() + "): O tipo data \'" + t.getType() 
-                + "\' nao existe para poder se criar um array.");
+                logError.add(formatError(t.getLine(),t.getColumn(),"O tipo data \'" + t.getType() + "\' nao existe"));
                 stk.push(tyErr);
             }
             else{
@@ -409,8 +392,7 @@ public class TypeCheckVisitor extends Visitor {
             stk.push(tipoData);
         }
         else{
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + i.getLine() + ", coluna: " + i.getColumn()
-                + "): Tipo data passado como parametro na funcao nao existe =>\'" + i.getID() + "\' ");
+            logError.add(formatError(i.getLine(), i.getColumn(), "Tipo data passado como parametro nao existe: " + i.getID()));
             stk.push(tyErr);
         }
     }
@@ -437,8 +419,7 @@ public class TypeCheckVisitor extends Visitor {
             i.getCmd().accept(this); // Verifica se o corpo de comandos do if é aceito
             
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + i.getLine() + ", coluna: " + i.getColumn()
-                + "): Expressao de teste do IF deve ser tipo Bool e nao \'" + expressao.toString() + "\' !");
+            logError.add(formatError(i.getLine(), i.getColumn(), "Expressao de teste do IF deve ser tipo Bool e nao " + expressao.toString()));
             stk.push(tyErr);
         }
     }
@@ -463,8 +444,7 @@ public class TypeCheckVisitor extends Visitor {
             // Garante que os dois tenham retorno
             retChk = begin && end;
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + i.getLine() + ", coluna: " + i.getColumn()
-                + "): Expressao de teste do IF deve ser tipo Bool e nao \'" + expressao.toString() + "\' !");
+            logError.add(formatError(i.getLine(), i.getColumn(), "Expressao de teste do IF deve ser tipo Bool!"));
             stk.push(tyErr);
         }
     }
@@ -478,9 +458,7 @@ public class TypeCheckVisitor extends Visitor {
         } else if (expressao.match(tyInt)) {
             i.getCmd().accept(this);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + i.getLine() + ", coluna: " + i.getColumn()
-                + "): Expressão de teste do Iterate so aceita tipo Bool ou Int e nao \'" + expressao.toString()
-                + "\' !");
+            logError.add(formatError(i.getLine(), i.getColumn(), "Expressão de teste do Iterate so aceita tipo Bool ou Int e nao " + expressao.toString()));
             stk.push(tyErr);
         }
 
@@ -489,14 +467,6 @@ public class TypeCheckVisitor extends Visitor {
     @Override
     public void visit(Read r) {
         r.getLValue().accept(this);
-        /*
-         * if(){
-         * 
-         * } else{ logError.add(r.getLine() + ", " + r.getColumn() +
-         * ": O comando read so grava informacoes em variaveis do tipo Int, Float ou Char"
-         * ); stk.push(tyErr); }
-         */
-
     }
 
     @Override
@@ -526,10 +496,7 @@ public class TypeCheckVisitor extends Visitor {
             
             // Quantidades de retorno para diferente em relação a quantidade descrita na função
             if(qtdExpRetorno != tiposRetornoPadrao.length){
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + r.getLine() + ", coluna: " 
-                + r.getColumn() + "): Foram especificados " + tiposRetornoPadrao.length 
-                + " tipos de retorno na documentacao da funcao mas no comando \'return\' apresenta " 
-                + qtdExpRetorno + " retorno(s) !!");
+                logError.add(formatError(r.getLine(), r.getColumn(), "Foram especificados " + tiposRetornoPadrao.length + " tipos de retorno, mas no comando 'return' apresenta " + qtdExpRetorno + " retorno(s)!!"));
                 stk.push(tyErr);
             }
 
@@ -543,9 +510,7 @@ public class TypeCheckVisitor extends Visitor {
                 }
 
                 if(!tiposRetornados[contRetornos].match(tiposRetornoPadrao[i])){
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + r.getLine() + ", coluna: " 
-                    + r.getColumn() + "): O tipo retornado na funcao \'" + tiposRetornados[contRetornos] + "\'" + " eh diferente de \'"
-                    + tiposRetornoPadrao[i] +"\' !!!");
+                    logError.add(formatError(r.getLine(), r.getColumn(), "O tipo retornado na funcao " + tiposRetornados[contRetornos] + "eh diferente de "+  tiposRetornoPadrao[i] + "!"));
                     stk.push(tyErr);
                 }
                 
@@ -576,7 +541,7 @@ public class TypeCheckVisitor extends Visitor {
                     STypeData newData = new STypeData(name);
 
                     if (datas.get(name) == null) {
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): O tipo de Data " + name + " ainda nao foi declarado.");
+                        logError.add(formatError(a.getLine(), a.getColumn(), " O tipo de Data" + name + " ainda nao foi declarado."));
                     }
                     else {
                         temp.set(lvalue.getId(), newData); // empilha a nova variavel de data
@@ -585,8 +550,7 @@ public class TypeCheckVisitor extends Visitor {
                     SType tipoVariavel = temp.get(lvalue.getId());
 
                     if (!tipoExpressao.match(tipoVariavel)) {
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn()
-                        + "): Reatribuicao de variavel => Problema na atribuicao de variável. Os tipos nao casam: " + tipoExpressao + " <-> " + "Data");
+                        logError.add(formatError(a.getLine(), a.getColumn(), " Reatribuicao de variavel => Problema na atribuicao de variável. Os tipos nao casam:" + tipoExpressao + " <-> " + "Data"));
                         stk.push(tyErr);
                     }
                 }
@@ -600,9 +564,7 @@ public class TypeCheckVisitor extends Visitor {
                     SType tipoVariavel = temp.get(lvalue.getId());
 
                     if (!tipoExpressao.match(tipoVariavel)) {
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn()
-                        + "): Reatribuicao de variavel => Problema na atribuicao de variavel. Os tipos nao casam: " + tipoExpressao + " <-> "
-                        + tipoVariavel);
+                        logError.add(formatError(a.getLine(), a.getColumn(), "Os tipos não se casam" + tipoExpressao + " - " + tipoVariavel));
                         stk.push(tyErr);
                     }
 
@@ -637,10 +599,8 @@ public class TypeCheckVisitor extends Visitor {
                         SType tipoMatriz = stk.pop();
 
                         // Compara o tipo o objeto a ser adiciona com o tipo do array
-                        if (!tipoMatriz.match(tipoExpAtribuicao)) {   
-                            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn()
-                                + "): Problema na atribuicao de variavel. Os tipos nao casam: " + tipoExpAtribuicao + " <-> "
-                                + tipoMatriz);
+                        if (!tipoMatriz.match(tipoExpAtribuicao)) {
+                            logError.add(formatError(a.getLine(), a.getColumn(), "Os tipos nao casam: " + tipoExpAtribuicao + " <-> " + tipoMatriz));
                             stk.push(tyErr);
                         }
                     }
@@ -672,10 +632,8 @@ public class TypeCheckVisitor extends Visitor {
                     SType tipoExpAtribuicao = stk.pop();
                     SType tipoArray = stk.pop();
 
-                    if (!tipoArray.match(tipoExpAtribuicao)) {   
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn()
-                            + "): Problema na atribuicao de variavel. Os tipos nao casam: " + tipoExpAtribuicao + " <-> "
-                            + tipoArray);
+                    if (!tipoArray.match(tipoExpAtribuicao)) {
+                        logError.add(formatError(a.getLine(), a.getColumn(), "Problema na atribuicao de variavel. Os tipos nao casam:" + tipoExpAtribuicao + " - " + tipoArray));
                         stk.push(tyErr);
                     }
                 }
@@ -700,15 +658,9 @@ public class TypeCheckVisitor extends Visitor {
             SType tipoExpressao = stk.pop();
             DataAccess d = (DataAccess)lvalue;
             if(!tipoExpressao.match(tipoVariavel)){  // Compara o tipo da expressao com o do atributo
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn()
-                    + "): Tipos incompativeis. O tipo do atributo \'" + d.getId()
-                    + "\' do array de data \'" + d.getDataId() + "\' eh \'"+ tipoVariavel+ "\' e nao \'"
-                    + tipoExpressao +"\' !!!"
-                );
+                logError.add(formatError(d.getLine(), d.getColumn(), "Tipos incompativeis. O tipo do atributo " + d.getId() + " do array de data " + d.getDataId() + " eh "+ tipoVariavel+ " e nao " + tipoExpressao + " !"));
                 stk.push(tyErr);
             }
-
-
         }
     }
 
@@ -815,18 +767,15 @@ public class TypeCheckVisitor extends Visitor {
 
                         // Se o parametro passado não casar com o da função, emite um erro
                         if (!tipoParametro.match(parametroPassado)) {
-                            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                                + "): Argumentos com tipos incompativeis com o da funcao \'" + f.getId()+"\' => " + parametroPassado + " diferente de " + tipoParametro);
+                            logError.add(formatError(f.getLine(), f.getColumn(), "Argumentos com tipos incompativeis com o da funcao" + f.getId()+ ": " + parametroPassado + " diferente de " + tipoParametro));
                             stk.push(tyErr);
-                        } 
-                        
+                        }
                     }
                     indiceParamPassado++;
                 }
                 Integer qtdParametrosInformados = ((List)f.getFCallParams().getExps()).size();
                 if( qtdParametrosInformados > tipoFuncao.getTypes().length || qtdParametrosInformados < tipoFuncao.getTypes().length){
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                    + "): Na chamada da funcao \'" + f.getId()+"\' foram passados " + qtdParametrosInformados + " parametros enquanto que a funcao deveria receber " + tipoFuncao.getTypes().length + " parametro !");
+                    logError.add(formatError(f.getLine(), f.getColumn(), "Na chamada da funcao" + f.getId() + " foram passados " + qtdParametrosInformados + " parametros enquanto que a funcao deveria receber " + tipoFuncao.getTypes().length + " parametro"));
                     stk.push(tyErr);
                 }
             }
@@ -847,7 +796,7 @@ public class TypeCheckVisitor extends Visitor {
                                 temp.set(ret.get(it).getId(), ((STypeFun)function.getFuncType()).getReturnTypes()[it]);
                             }
                             else{
-                                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): A variavel \'" + ret.get(it).getId() + "\' ja existe e seu tipo eh \'" + temp.get(ret.get(it).getId()) + "\' e portanto, nao pode receber o valor do tipo \'" + ((STypeFun)function.getFuncType()).getReturnTypes()[it] + "\' retornado pela funcao \'" + f.getId() + "\'");
+                                logError.add(formatError(f.getLine(), f.getColumn(), "A variavel " + ret.get(it).getId() + " ja existe e portanto, nao pode receber o valor do tipo " + ((STypeFun)function.getFuncType()).getReturnTypes()[it] + " retornado pela funcao" + f.getId()));
                                 stk.push(tyErr);
                             }
                         }
@@ -859,8 +808,7 @@ public class TypeCheckVisitor extends Visitor {
 
                     }
                 else{   // A função não tem retorno ou é menor que o numero de retornos solicitados pelo usuario
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                    + "): Na chamada da funcao foram solicitados \'" + f.getLValues().size()+"\' retorno(s) mas a funcao original apresenta " + ((STypeFun)function.getFuncType()).getReturnTypes().length + " retorno(s) !");
+                    logError.add(formatError(f.getLine(), f.getColumn(), "Foram solicitados " + f.getLValues().size() + " retorno(s) mas a funcao apresenta" + ((STypeFun)function.getFuncType()).getReturnTypes().length + "retorno(s)!"));
                     stk.push(tyErr);
                 }
             }
@@ -874,8 +822,7 @@ public class TypeCheckVisitor extends Visitor {
             if (tyl.match(tyInt)){//|| tyl.match(tyFloat)) {
                 stk.push(tyl);
             } else {
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'" + opName + "\' nao se aplica aos tipos "
-                    + tyl.toString() + " e " + tyr.toString());
+                logError.add(formatError(n.getLine(), n.getColumn(), "Operador" + opName + "nao se aplica aos tipos" + tyl.toString() + " e " + tyr.toString()));
                 stk.push(tyErr);
             }
 
@@ -883,13 +830,11 @@ public class TypeCheckVisitor extends Visitor {
             if (tyl.match(tyFloat)) {
                 stk.push(tyr); 
             } else {
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'" + opName + "\' nao se aplica aos tipos "
-                    + tyl.toString() + " e " + tyr.toString());
+                logError.add(formatError(n.getLine(), n.getColumn(), "Operador " + opName + " nao se aplica aos tipos" + tyl.toString() + " e " + tyr.toString()));
                 stk.push(tyErr);
             }
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'" + opName + "\' nao se aplica aos tipos "
-                + tyl.toString() + " e " + tyr.toString());
+            logError.add(formatError(n.getLine(), n.getColumn(), "Operador " + opName + " nao se aplica aos tipos " + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -904,8 +849,7 @@ public class TypeCheckVisitor extends Visitor {
         if (tyr.match(tyBool) && tyl.match(tyBool)) {
             stk.push(tyBool);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): Operador \'&&\' nao se aplica aos tipos " + tyl.toString()
-                + " e " + tyr.toString());
+            logError.add(formatError(a.getLine(), a.getColumn(), "Operador '&&' nao se aplica aos tipos" + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -920,8 +864,7 @@ public class TypeCheckVisitor extends Visitor {
         if ((tyr.match(tyInt) || tyr.match(tyFloat)) && (tyl.match(tyInt) || tyr.match(tyFloat))) {
             stk.push(tyBool);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + l.getLine() + ", coluna: " + l.getColumn() + "): Operador \'<\' nao se aplica aos tipos " + tyl.toString()
-                + " e " + tyr.toString());
+            logError.add(formatError(l.getLine(), l.getColumn(), "Operador '<' nao se aplica aos tipos" + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -937,8 +880,7 @@ public class TypeCheckVisitor extends Visitor {
         } else if (tyl.match(tyChar) && tyr.match(tyChar)) {
             stk.push(tyBool);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + e.getLine() + ", coluna: " + e.getColumn() + "): Operador \'==\' nao se aplica aos tipos " + tyl.toString()
-                + " e " + tyr.toString());
+            logError.add(formatError(e.getLine(), e.getColumn(), "Operador '==' nao se aplica aos tipos " + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -954,8 +896,7 @@ public class TypeCheckVisitor extends Visitor {
         } else if (tyl.match(tyChar) && tyr.match(tyChar)) {
             stk.push(tyBool);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'!=\' nao se aplica aos tipos " + tyl.toString()
-                + " e " + tyr.toString());
+            logError.add(formatError(n.getLine(), n.getColumn(), " Operador '!=' nao se aplica aos tipos " + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -999,8 +940,7 @@ public class TypeCheckVisitor extends Visitor {
         if (tyr.match(tyInt) && tyl.match(tyInt)) {
             stk.push(tyInt);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + m.getLine() + ", coluna: " + m.getColumn() + "): Operador \'%\' nao se aplica aos tipos " + tyl.toString()
-                + " e " + tyr.toString());
+            logError.add(formatError(m.getLine(), m.getColumn(), "Operador '%' nao se aplica aos tipos " + tyl.toString() + " e " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -1013,7 +953,7 @@ public class TypeCheckVisitor extends Visitor {
         if (tyr.match(tyBool)) {
             stk.push(tyBool);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'!\' nao se aplica ao tipo " + tyr.toString());
+            logError.add(formatError(n.getLine(), n.getColumn(), "Operador '!' nao se aplica ao tipo " + tyr.toString()));
             stk.push(tyErr);
         }
 
@@ -1028,7 +968,7 @@ public class TypeCheckVisitor extends Visitor {
         } else if (tyr.match(tyFloat)) {
             stk.push(tyFloat);
         } else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + n.getLine() + ", coluna: " + n.getColumn() + "): Operador \'-\' nao se aplica ao tipo " + tyr.toString());
+            logError.add(formatError(n.getLine(), n.getColumn(), "Operador '-' nao se aplica ao tipo " + tyr.toString()));
             stk.push(tyErr);
         }
     }
@@ -1060,15 +1000,12 @@ public class TypeCheckVisitor extends Visitor {
         stk.push(tyChar);
     }
 
-    // Partem do pexp
     @Override
     public void visit(PexpIdentifier i) {
-        // Nao faz nada
     }
 
     @Override
     public void visit(ExpParenthesis e) {
-        // Nao faz nada
     }
 
     @Override
@@ -1085,9 +1022,7 @@ public class TypeCheckVisitor extends Visitor {
                 t.getExp().accept(this);
                 SType tamanhoArray = stk.pop();
                 if (!tamanhoArray.match(tyInt)) { // Verifica tamanho int para o array
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " + t.getColumn()
-                        + "): o tamanho de um array so pode ser atribuido com o tipo int e nao \'" + tamanhoArray
-                        + "\' .");
+                    logError.add(formatError(t.getLine(), t.getColumn(), "o tamanho de um array so pode ser atribuido com o tipo int e nao " + tamanhoArray));
                     stk.push(tyErr);
                 }
                 SType tipoArray = stk.pop();
@@ -1107,8 +1042,7 @@ public class TypeCheckVisitor extends Visitor {
                     stk.add(tyData);
                 }
                 else{
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " + t.getColumn()
-                        + "): o tipo data \'" + t.getDataName() + "\' nao existe !");
+                    logError.add(formatError(t.getLine(), t.getColumn(), "o tipo data '" + t.getDataName() + "' nao existe!"));
                     stk.push(tyErr);
                 }
             } else { // Array de data
@@ -1117,8 +1051,7 @@ public class TypeCheckVisitor extends Visitor {
 
                 SType tamanhoArray = stk.pop();
                 if (!tamanhoArray.match(tyInt)) { // Verifica tamanho int para o array
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " + t.getColumn()
-                        + "): o tamanho de um array so pode ser atribuido com o tipo int e nao \'" + tamanhoArray + "\' .");
+                    logError.add(formatError(t.getLine(), t.getColumn(), "O tamanho de um array nao pode ser atribuido com o tipo \'" + tamanhoArray + "\' apenas Int."));
                     stk.push(tyErr);
                 }
 
@@ -1130,8 +1063,7 @@ public class TypeCheckVisitor extends Visitor {
                     stk.add(array);
                 }
                 else{
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " + t.getColumn()
-                        + "): o tipo data \'" + t.getDataName() + "\' nao existe !");
+                    logError.add(formatError(t.getLine(), t.getColumn(), "O tipo data \'" + t.getDataName() + "\' nao existe!"));
                     stk.push(tyErr);
                 }
             }   
@@ -1238,11 +1170,7 @@ public class TypeCheckVisitor extends Visitor {
 
                         // Se o parametro passado não casar com o da função, emite um erro
                         if (!tipoParametro.match(parametroPassado)) {
-                            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                                + "): Argumentos com tipos incompativeis com os parametros da funcao \'" + f.getId()+"\'"
-                                + " => O parametro \'" + tipoFuncao.getTypesName()[tempID] + "\' deve apresentar o tipo \'"
-                                + tipoParametro + "\' e nao \'" + parametroPassado + "\' !!!"
-                            );
+                            logError.add(formatError(f.getLine(), f.getColumn(), "Os tipos do argumento sao incompativeis com os parametros da funcao \'" + f.getId()+"\'" + ", o parametro \'" + tipoFuncao.getTypesName()[tempID] + "\' deve apresentar o tipo \'" + tipoParametro + "\' e nao \'" + parametroPassado + "\'!"));
                             stk.push(tyErr);
                         }
 
@@ -1253,15 +1181,11 @@ public class TypeCheckVisitor extends Visitor {
                 }
                 else{
                     if(f.getFCallParams().getExps().size() > tipoFuncao.getTypes().length){
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                        + "): Foi passado mais argumentos que a quantidade de parametros que a funcao \'" + f.getId()+"\'"
-                        + " apresenta, sendo: " + f.getFCallParams().getExps().size() + " argumento(s) no parametro na chamada da funcao e " + tipoFuncao.getTypes().length + " argumento(s) no parametro na declaracao da funcao  !!!");
+                        logError.add(formatError(f.getLine(), f.getColumn(), "Na funcao \'" + f.getId()+"\'" + " foram passados," + f.getFCallParams().getExps().size() + " argumento(s) com parametro e " + tipoFuncao.getTypes().length + " argumento(s) na declaracao da funcao"));
                         stk.push(tyErr);
                     }
                     else{
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                        + "): Foi passado menos argumentos que a quantidade de parametros que a funcao \'" + f.getId()+"\'"
-                        + " apresenta, sendo: " + f.getFCallParams().getExps().size() + " argumento(s) no parametro na chamada da funcao e " + tipoFuncao.getTypes().length + " argumento(s) no parametro na declaracao da funcao  !!!");
+                        logError.add(formatError(f.getLine(), f.getColumn(), "Na função \'" + f.getId()+"\'" + " foram passados," + f.getFCallParams().getExps().size() + " argumento(s) na chamada e " + tipoFuncao.getTypes().length + " foram declarados"));
                         stk.push(tyErr);
                     }
                 }
@@ -1270,10 +1194,7 @@ public class TypeCheckVisitor extends Visitor {
                 STypeFun tipoFuncao = (STypeFun) function.getFuncType();
 
                 if(tipoFuncao.getTypes().length > 0){   // Tem parametros na declaracao da funcao mas nao tem na chamada dela
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + 
-                        "): Foi passado 0 argumentos como parametro na chamada da funcao \'" + f.getId()+"\'"
-                        + " sendo que na declaracao da funcao ela precisa de " + tipoFuncao.getTypes().length + " parametro(s) !!"
-                    );
+                    logError.add(formatError(f.getLine(), f.getColumn(), "Nenhum argumento foi passado como parametro para a funcao " + f.getId()));
                     stk.push(tyErr);
                 }
             }
@@ -1284,9 +1205,7 @@ public class TypeCheckVisitor extends Visitor {
 
         SType tipoPosicaoRetorno = stk.pop();
         if (!tipoPosicaoRetorno.match(tyInt)) {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna:" + f.getColumn()
-                + "): O retorno da funcao so pode ser acessado com uma posicao em valor Int e nao \'" 
-                + tipoPosicaoRetorno + "\' !");
+            logError.add(formatError(f.getLine(), f.getColumn(), "So pode acessar o retorno da funcao com uma posicao em valor Int e nao \'" + tipoPosicaoRetorno + "\' !"));
             stk.push(tyErr);
         }
 
@@ -1325,7 +1244,7 @@ public class TypeCheckVisitor extends Visitor {
     @Override
     public void visit(Identifier i) {
         if (temp.get(i.getId()) == null) {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: "+i.getLine() + ", coluna: " + i.getColumn() + "): A variavel \'" + i.getId() + "\' nao existe!!!");
+            logError.add(formatError(i.getLine(), i.getColumn(), "A variavel \'" + i.getId() + "\' nao existe!"));
             stk.push(tyErr);
         } else {
             stk.push(temp.get(i.getId()));
@@ -1341,8 +1260,7 @@ public class TypeCheckVisitor extends Visitor {
             STypeData dataType = (STypeData) temp.get(d.getDataId());
 
             if (datas.get(dataType.getName()) == null) {
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: "+d.getLine() + ", coluna: " + d.getColumn() 
-                + "): Acesso a um tipo de data inexistente: " + dataType.getName());
+                logError.add(formatError(d.getLine(), d.getColumn(), "Acesso ao tipo de data inexistente: " + dataType.getName()));
                 stk.push(tyErr);
             }
             else{
@@ -1356,7 +1274,7 @@ public class TypeCheckVisitor extends Visitor {
                     }
                 }
                 if(!atribEncontrado){   // Atributo nao encontrado
-                    logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): Atributo \'" + d.getId() + "\' eh inexistente em \'"+ dataType.getName()+"\' !!");
+                    logError.add(formatError(d.getLine(), d.getColumn(), "Atributo \'" + d.getId() + "\' nao existe em \'"+ dataType.getName()+"\'!"));
                     stk.push(tyErr);
                 }
             }
@@ -1381,9 +1299,7 @@ public class TypeCheckVisitor extends Visitor {
                     // O tipo da expressao está no topo da pilha
                     // Agora compara-se o tipo do atributo(variavel)
                     if (!stk.pop().match(dataTypes.get(i))) {
-                        logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn()
-                            + "): Erro de tipo no acesso a um data. Verifique o tipo do atributo \'" + d.getId()
-                            + "\' do data \'" + d.getDataId() + "\' !!");
+                        logError.add(formatError(d.getLine(), d.getColumn(), "Erro de tipagem. Verificar o tipo do atributo \'" + d.getId() + "\' do data \'" + d.getDataId() + "\'!"));
                         stk.push(tyErr);
                     }
                     varEncontrada = true;
@@ -1393,8 +1309,7 @@ public class TypeCheckVisitor extends Visitor {
 
             // Variavel inexistente no objeto, logo é um erro
             if (!varEncontrada) {
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): \'" + d.getId()
-                    + "\' => Atributo inexistente no objeto \'" + d.getDataId() + "\'");
+                logError.add(formatError(d.getLine(), d.getColumn(), "Atributo nao existe no objeto \'" + d.getDataId() + "\'"));
                 stk.push(tyErr);
             }
 
@@ -1429,14 +1344,13 @@ public class TypeCheckVisitor extends Visitor {
 
             // Variavel inexistente no objeto, logo é um erro
             if (!varEncontrada) {
-                logError.add("(" + getLineNumber() + ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): \'" + d.getId()
-                    + "\' => Atributo inexistente no objeto \'" + d.getDataId() + "\'");
+                logError.add(formatError(d.getLine(), d.getColumn(), "Atributo nao existe no objeto \'" + d.getDataId() + "\'"));
                 stk.push(tyErr);
             }
 
         }
         else {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + d.getLine() + ", coluna: " + d.getColumn() + "): A variavel \'" + d.getDataId() + "\' nao existe e portanto nao pode ter atributos !!!");
+            logError.add(formatError(d.getLine(), d.getColumn(), "A variavel \'" + d.getDataId() + "\' nao existe e nao pode ter atributos!"));
             stk.push(tyErr);
         }
     }
@@ -1452,7 +1366,7 @@ public class TypeCheckVisitor extends Visitor {
                 }
             }
             else{
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): a variavel  \'" + a.getLValue().getId() + "\' nao existe !!");
+                logError.add(formatError(a.getLine(), a.getColumn(), "A variavel  \'" + a.getLValue().getId() + "\' nao existe!"));
                 stk.push(tyErr);
             }
         }
@@ -1464,7 +1378,7 @@ public class TypeCheckVisitor extends Visitor {
                     if(argumento instanceof STypeArray){
                         SType tipoMatriz = ((STypeArray)argumento).getArg();
                         if(tipoMatriz instanceof STypeArray){
-                            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): Nao eh possivel uma matriz no formato "+ tipoAux + "!!");
+                            logError.add(formatError(a.getLine(), a.getColumn(), "Matriz no formato "+ tipoAux + "nao e permitida!"));
                             stk.push(tyErr);
                         }
                         else{
@@ -1472,7 +1386,7 @@ public class TypeCheckVisitor extends Visitor {
                             ((ArrayAccess)a.getLValue()).getExp().accept(this);
                             SType tipoLinha = stk.pop();
                             if (!tipoLinha.match(tyInt)) { // Verifica se o tipo da posicao da linha na matriz é um valor inteiro
-                                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): Arrays so podem ter sua posicao acessada se o indice for um numero inteiro e nao \'" + tipoLinha + "\' !!");
+                                logError.add(formatError(a.getLine(), a.getColumn(), "O indice deve ser um numero inteiro para acessar a posicao do Array, e nao \'" + tipoLinha + "\' !"));
                                 stk.push(tyErr);
                             }
 
@@ -1485,7 +1399,7 @@ public class TypeCheckVisitor extends Visitor {
                 }
             }
             else{
-                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): a variavel  \'" + a.getLValue().getId() + "\' nao existe !!");
+                logError.add(formatError(a.getLine(), a.getColumn(), "A variavel \'" + a.getLValue().getId() + "\' nao existe!"));
                 stk.push(tyErr);
             }
         }
@@ -1493,7 +1407,7 @@ public class TypeCheckVisitor extends Visitor {
         a.getExp().accept(this); // Verifica se a posicao foi passada
         SType tipo = stk.pop();
         if (!tipo.match(tyInt)) { // Verifica se o tipo da posicao do array é um valor inteiro
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): Arrays so podem ter sua posicao acessada se o indice for um numero inteiro e nao \'" + tipo + "\' !!");
+            logError.add(formatError(a.getLine(), a.getColumn(), "Arrays so podem ter sua posicao acessada se o indice for um numero inteiro, e nao \'" + tipo + "\'!"));
             stk.push(tyErr);
         }
     }

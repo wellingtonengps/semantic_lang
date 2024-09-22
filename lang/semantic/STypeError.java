@@ -4,8 +4,6 @@
  */
 package lang.semantic;
 
-
-// Define o tipo de erro semantico no TypeCheckVisitor
 public class STypeError extends SType {
 
     private static STypeError st = new STypeError();

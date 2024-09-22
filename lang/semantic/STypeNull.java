@@ -4,7 +4,6 @@
  */
 package lang.semantic;
 
-// Define o tipo Null para a analise semantica no typeCheckVisitor
 public class STypeNull extends SType{
     private static STypeNull st = new STypeNull();
 
