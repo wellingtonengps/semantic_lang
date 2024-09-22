@@ -220,7 +220,7 @@ public class TypeCheckVisitor extends Visitor {
         }
 
         if (main == null) {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + p.getLine() + ", coluna: " + p.getColumn() + "): Nao ha a funcao chamada \'main_\' !");
+            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + p.getLine() + ", coluna: " + p.getColumn() + "): Nao ha a funcao chamada \'main\' !");
             stk.push(tyErr);
         }
     }

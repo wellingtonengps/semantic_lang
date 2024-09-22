@@ -1,20 +1,12 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
 
 public class Read extends Command {
-    /**
-     * ---- Regra
-     * cmd: READ lvalue SEMI  # Read
-    */
-    
     private LValue lvalue;      // Variavel que vai armazenar o valor
 
     public Read (int line, int column, LValue lvalue){

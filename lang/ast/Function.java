@@ -1,10 +1,7 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
@@ -13,11 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Function extends Node{
-    /**
-     * ---- Regra
-     * func: ID OPEN_PARENT params? CLOSE_PARENT (COLON type (COMMA type)*)? 
-     * OPEN_BRACES cmd* CLOSE_BRACES    # Function
-    */
     private String id;
     private Parameters parameters;
     private List<Type> returnTypes;     // Tipos de retorno da função

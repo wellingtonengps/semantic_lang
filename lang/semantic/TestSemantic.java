@@ -11,7 +11,7 @@ import lang.ast.*;
 
 public class TestSemantic {
     private SemanticAdaptor sdp;
-    private String okSrcs = "testes/semantica/certo/";
+    private String okSrcs = "testes/semantica/errado/";
     private File f;
 
     public TestSemantic(SemanticAdaptor sdp) {

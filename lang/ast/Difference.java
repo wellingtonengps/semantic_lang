@@ -1,19 +1,12 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
 
 public class Difference extends BinOP{
-    /**
-     * ---- Regra
-     *  rexp: <assoc=left> rexp DIFFERENCE aexp  # Difference
-    */
     public Difference(int line, int column, Expression left, Expression right) {
         super(line, column, left, right);
     }

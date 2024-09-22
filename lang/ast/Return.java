@@ -1,10 +1,7 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
@@ -13,11 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Return extends Command {
-    /**
-     * ---- Regra
-     * cmd: RETURN exp (COMMA exp)* SEMI  # Return
-    */
-
     private List<Expression> exps = new ArrayList<>();
 
     public Return (int line, int column, List<Expression> exps){

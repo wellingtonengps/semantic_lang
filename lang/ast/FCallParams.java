@@ -1,10 +1,7 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
@@ -12,11 +9,6 @@ import lang.interpreter.Visitor;
 import java.util.List;
 
 public class FCallParams extends Expression{
-    /**
-     * ---- Regra
-     * exps: exp (COMMA exp)*      # FCallParams
-     * -- Parametros na chamada da função
-    */
     private List<Expression> exps;
 
     public FCallParams(int line, int column, List<Expression> exps){

@@ -1,20 +1,12 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
 
 public class Not extends Expression {
-    /**
-     * ---- Regra
-     * sexp:<assoc=right> EXCLAMATION sexp # Not
-    */
-    
     private Expression exp;
 
     public Not(int line, int column, Expression exp) {

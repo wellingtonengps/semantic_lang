@@ -1,10 +1,7 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
@@ -13,13 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Program extends Node{
-    /*********************************************
-     *              Regra                        *
-     *      Program -> data* func*               *
-     *                                           *
-     * Armazena a lista de nós do tipo data e do *
-     * tipo função                               *
-    **********************************************/
     private List<Data> datas;
     private List<Function> functions;
 

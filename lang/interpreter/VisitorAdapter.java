@@ -66,6 +66,42 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
         );
     }
 
+
+    @Override
+    public Node visitFunction(FunctionContext ctx) {
+        // ----- Regra
+        // func: ID OPEN_PARENT params? CLOSE_PARENT (COLON type (COMMA type)*)?
+        //    OPEN_BRACES cmd* CLOSE_BRACES    # Function
+
+        // (COLON type (COMMA type)*)? -- Tipos de Retorno da função
+
+
+        int line = ctx.getStart().getLine();
+        int column = ctx.getStart().getCharPositionInLine();
+
+        Function function = new Function(line, column, ctx.getChild(0).getText());  // Nome da função
+
+        Parameters parameters;
+
+        if (ctx.params() != null) { // Checa se há parametros na função
+            parameters = (Parameters) ctx.params().accept(this);
+            function.setParameters(parameters);
+        }
+
+        for (int i = 0; i < (ctx.type().size()) && this.shouldVisitNextChild(ctx, this.defaultResult()); i++) {
+            ParseTree childTree = ctx.type(i);
+            function.addReturnTypes((Type) this.aggregateResult(this.defaultResult(), childTree.accept(this)));
+        }
+
+        for (int i = 0; i < (ctx.cmd().size()) && this.shouldVisitNextChild(ctx, this.defaultResult()); i++) {
+            ParseTree childTree = ctx.cmd(i);
+            function.addCommand((Command) this.aggregateResult(this.defaultResult(), childTree.accept(this)));
+        }
+
+        return function;
+    }
+
+    /*
     @Override
     public Node visitFunction(FunctionContext ctx) {
 
@@ -107,14 +143,15 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
         }
 
         return function;
-    }
+    }*/
 
+    /*
     private String generateFunctionId(String functionName, int paramTypesSize) {
         if(paramTypesSize != 0){
             return functionName + "_" + paramTypesSize;
         }
         return functionName + "_";
-    }
+    }*/
 
     @Override
     public Node visitParametersFunction(ParametersFunctionContext ctx) {
@@ -246,8 +283,7 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
                 (LValue) ctx.lvalue().accept(this), (Expression) ctx.exp().accept(this));
     }
 
-
-
+    /*
     @Override
     public Node visitFunctionCall(FunctionCallContext ctx) {
 
@@ -274,7 +310,30 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
         }
 
         return fcall;
+    }*/
+
+    @Override
+    public Node visitFunctionCall(FunctionCallContext ctx) {
+        // ----- Regra
+        // cmd: ID OPEN_PARENT exps? CLOSE_PARENT (LESS_THAN lvalue (COMMA lvalue)* GREATER_THAN)? SEMI   # FunctionCall
+
+        FunctionCall fcall = new FunctionCall(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getChild(0).getText());
+
+        // Verifica se há parametros na função
+        if (ctx.exps() != null) {
+            FCallParams exps = (FCallParams) ctx.exps().accept(this);
+
+            fcall = new FunctionCall(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getChild(0).getText(), exps);
+        }
+
+        for (int i = 0; i < ctx.lvalue().size() && this.shouldVisitNextChild(ctx, this.defaultResult()); i++) {
+            ParseTree childTree = ctx.lvalue(i);
+            fcall.addLValue((LValue) this.aggregateResult(this.defaultResult(), childTree.accept(this)));
+        }
+
+        return fcall;
     }
+
 
     @Override
     public Node visitRExpCall(RExpCallContext ctx) {
@@ -457,8 +516,13 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitFunctionReturn(FunctionReturnContext ctx) {
+        // ----- Regra
+        // pexp: ID OPEN_PARENT exps? CLOSE_PARENT OPEN_BRACKET exp CLOSE_BRACKET  # FunctionReturn // Como retorna 2 valores, logo precisa do funcao(parametros)[indice] Exemplo: fat(num−1)[0]
         String str = ctx.ID().getText();
-        FCallParams fCallPar = (FCallParams) ctx.exps().accept(this);
+        FCallParams fCallPar = null;
+        if(ctx.exps() != null){ // Verifica se os parametros são nulos
+            fCallPar = (FCallParams) ctx.exps().accept(this);
+        }
         Expression exp = (Expression) ctx.exp().accept(this);
         return new FunctionReturn(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine(), str, fCallPar, exp);
     }

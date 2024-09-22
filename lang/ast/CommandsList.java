@@ -1,10 +1,7 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
@@ -13,21 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommandsList extends Command{
-    /**
-     * ---- Regra: --------
-     * cmd: OPEN_BRACES cmd* CLOSE_BRACES      # CommandsList
-     * --------------------
-     * => Possibilita criar escopo de bloco
-     * Exemplo: 
-     * func(k :: int){
-     *       x = 2;
-     *       {
-     *           y = 4;
-     *           k = 5;
-     *       }
-     * }
-    */
-
     private List<Command> commands;
 
     public CommandsList(int line, int column, List<Command> commands){
