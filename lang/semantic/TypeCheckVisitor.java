@@ -208,7 +208,7 @@ public class TypeCheckVisitor extends Visitor {
         // Checa as funções
         for (Function f : p.getFunctions()) {
             f.accept(this);
-            if (f.getId().equals("main")) {     // Verifica se tem a função main
+            if (f.getId().equals("main_")) {     // Verifica se tem a função main
                 
                 // Certifica que a funcao main nao deve ter parametros
                 if(((Parameters)f.getParameters()).getType().size() != 0){
@@ -220,7 +220,7 @@ public class TypeCheckVisitor extends Visitor {
         }
 
         if (main == null) {
-            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + p.getLine() + ", coluna: " + p.getColumn() + "): Nao ha a funcao chamada \'main\' !");
+            logError.add("(" + getLineNumber()+ ") Erro em (linha: " + p.getLine() + ", coluna: " + p.getColumn() + "): Nao ha a funcao chamada \'main_\' !");
             stk.push(tyErr);
         }
     }

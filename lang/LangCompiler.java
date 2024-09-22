@@ -78,6 +78,7 @@ public class LangCompiler {
                 InterpreterVisitor interpreter = new InterpreterVisitor();
                 
                 System.out.println("\n---------- Execuntando o Interpretador ------------\n");
+
                 ((Node)result).accept(interpreter);               // Passa o node criado e testa o interpretador
             } else if (args[0].equals("-ii")) {
                 // iv = new InteractiveInterpreterVisitor();
