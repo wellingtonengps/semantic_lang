@@ -22,7 +22,7 @@ rm -f lang/parser/LangParserBaseVisitor.*
 rm -f lang/parser/LangListener.*
 rm -f lang/parser/LangParserListener.*
 rm -f lang/parser/LangParserVisitor.*
-rm -f lang/parser/ast/*.class
+rm -f lang/ast/*.class
 
 # Gera as classes java do interpretador
 echo "----  Gera as classes java do interpretador ----"

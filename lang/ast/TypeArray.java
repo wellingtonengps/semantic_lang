@@ -1,19 +1,11 @@
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*                                                       *
-* Projeto do Interpretador para a Linguagem Lang        *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 package lang.ast;
 
 import lang.interpreter.Visitor;
 public class TypeArray extends Type{
-    /**
-     * ---- Regra
-     * type: type OPEN_BRACKET CLOSE_BRACKET   # TypeDeclaration   
-     * -- tipo de array. Exemplo: Int[]
-     */
     private Type type;
 
     public TypeArray(int line, int column, Type type) {

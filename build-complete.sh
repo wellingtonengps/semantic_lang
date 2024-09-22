@@ -16,7 +16,7 @@ rm LangParserBaseVisitor.*
 rm LangListener.*
 rm LangParserListener.*
 rm LangParserVisitor.*
-rm 
+
 
 echo "----  Gera as classes java do interpretador"
 java -jar ../../library/antlr-4.13.2-complete.jar -visitor LangLexer.g4 LangParser.g4
