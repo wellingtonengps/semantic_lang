@@ -15,18 +15,18 @@ import lang.ast.*;
 
 // Define o visitor que fará a analise semantica 
 public class TypeCheckVisitor extends Visitor {
-    private STyInt tyInt = STyInt.newSTyInt();
-    private STyFloat tyFloat = STyFloat.newSTyFloat();
-    private STyCharacter tyChar = STyCharacter.newSTyCharacter();
-    private STyBool tyBool = STyBool.newSTyBool();
-    private STyNull tyNull = STyNull.newSTyNull();
-    private STyErr tyErr = STyErr.newSTyErr();
+    private STypeInt tyInt = STypeInt.newSTyInt();
+    private STypeFloat tyFloat = STypeFloat.newSTyFloat();
+    private STypeCharacter tyChar = STypeCharacter.newSTyCharacter();
+    private STypeBoolean tyBool = STypeBoolean.newSTyBool();
+    private STypeNull tyNull = STypeNull.newSTyNull();
+    private STypeError tyErr = STypeError.newSTyErr();
 
     // Armazena as mensagens de erro
     private ArrayList<String> logError;
 
     // Armazena o ambiente das funções
-    private TyEnv<LocalAmbiente<SType>> env;
+    private Env<LocalAmbiente<SType>> env;
 
     // Ambiente temporario da função para executar os comandos
     private LocalAmbiente<SType> temp;
@@ -51,7 +51,7 @@ public class TypeCheckVisitor extends Visitor {
 
     public TypeCheckVisitor() {
         stk = new Stack<SType>();
-        env = new TyEnv<LocalAmbiente<SType>>();
+        env = new Env<LocalAmbiente<SType>>();
         logError = new ArrayList<String>();
         datas = new HashMap<String, DataAttributes>();
         funcs = new ArrayList<Function>();
@@ -105,8 +105,8 @@ public class TypeCheckVisitor extends Visitor {
 
             for(int i = 0; i < funcoes.size(); i++){
                 LocalAmbiente<SType> funcaoBase = funcoes.get(i);
-                STyFun funcaoBaseTipo = (STyFun)funcaoBase.getFuncType();
-                STyFun funcaoNovaTipo = (STyFun)funcaoNova.getFuncType();
+                STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
+                STypeFun funcaoNovaTipo = (STypeFun)funcaoNova.getFuncType();
                 if(funcaoBaseTipo.getTypes().length == funcaoNovaTipo.getTypes().length){
                     boolean isDifferentType = false;
                     // testa o casamento de todos os tipos
@@ -189,7 +189,7 @@ public class TypeCheckVisitor extends Visitor {
                 }
             }
 
-            LocalAmbiente<SType> novaFuncao = new LocalAmbiente<SType>(f.getId(), new STyFun(parameterType, returnType, namesParameter, f.getId()));
+            LocalAmbiente<SType> novaFuncao = new LocalAmbiente<SType>(f.getId(), new STypeFun(parameterType, returnType, namesParameter, f.getId()));
 
             // Passa o ambiente da funcao para checar sobrecarga e verificar se existe funcoes iguais
             boolean funcaoValida = functionIsValid(f.getLine(), f.getColumn(), novaFuncao);
@@ -271,7 +271,7 @@ public class TypeCheckVisitor extends Visitor {
         if(funcFinded.size() > 1){  // Tem sobrecarga 
             for(int i = 0; i < funcFinded.size(); i++){
                 LocalAmbiente<SType> funcaoBase = funcFinded.get(i);
-                STyFun funcaoBaseTipo = (STyFun)funcaoBase.getFuncType();
+                STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
 
                 // Se a funcao tem o mesmo numero de parametros entao pode ser a correta
                 if(funcaoBaseTipo.getTypes().length == f.getParameters().getType().size()){
@@ -315,9 +315,9 @@ public class TypeCheckVisitor extends Visitor {
         }
 
         SType[] tiposRetornoPadrao = new SType[0];
-        if (temp.getFuncType() instanceof STyFun) {
+        if (temp.getFuncType() instanceof STypeFun) {
             // Padrao da documentação da função
-            tiposRetornoPadrao = ((STyFun) temp.getFuncType()).getReturnTypes();
+            tiposRetornoPadrao = ((STypeFun) temp.getFuncType()).getReturnTypes();
         }
 
         if (!retChk && tiposRetornoPadrao.length > 0) {
@@ -350,26 +350,26 @@ public class TypeCheckVisitor extends Visitor {
         else{
             t.getType().accept(this); // Empilha o tipo do array
             SType tipo = stk.pop();
-            if(tipo instanceof STyData){    // Array de data ==> Testar se o data existe
-                if(datas.get(((STyData)tipo).getName()) != null){   // Verifica se o tipo Data existe
-                    STyArr array = new STyArr(tipo);
+            if(tipo instanceof STypeData){    // Array de data ==> Testar se o data existe
+                if(datas.get(((STypeData)tipo).getName()) != null){   // Verifica se o tipo Data existe
+                    STypeArray array = new STypeArray(tipo);
                     stk.push(array);
                 }
                 else{
                     logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " 
-                    + t.getColumn() + "): O tipo data \'" + ((STyData)tipo).getName() 
+                    + t.getColumn() + "): O tipo data \'" + ((STypeData)tipo).getName()
                     + "\' nao existe para poder se criar um array.");
                     stk.push(tyErr);
                 }
             }
-            else if(tipo instanceof STyErr){
+            else if(tipo instanceof STypeError){
                 logError.add("(" + getLineNumber()+ ") Erro em (linha: " + t.getLine() + ", coluna: " 
                 + t.getColumn() + "): O tipo data \'" + t.getType() 
                 + "\' nao existe para poder se criar um array.");
                 stk.push(tyErr);
             }
             else{
-                STyArr array = new STyArr(tipo);
+                STypeArray array = new STypeArray(tipo);
                 stk.push(array);
             }
         }
@@ -405,7 +405,7 @@ public class TypeCheckVisitor extends Visitor {
     public void visit(NameType i) { // TypeData
         // Nao faz nada pois já foi tratado em outra funcao
         if(datas.get(i.getID()) != null){   // Se o tipo data existe
-            STyData tipoData = new STyData(i.getID());
+            STypeData tipoData = new STypeData(i.getID());
             stk.push(tipoData);
         }
         else{
@@ -514,9 +514,9 @@ public class TypeCheckVisitor extends Visitor {
             exp.accept(this);   // Aceita a expressão e empilha no stk
             qtdExpRetorno++;
         }
-        if (temp.getFuncType() instanceof STyFun) {
+        if (temp.getFuncType() instanceof STypeFun) {
             // Padrao da documentação da função
-            SType[] tiposRetornoPadrao = ((STyFun) temp.getFuncType()).getReturnTypes();
+            SType[] tiposRetornoPadrao = ((STypeFun) temp.getFuncType()).getReturnTypes();
             SType[] tiposRetornados = new SType[qtdExpRetorno];
 
             // Desempilha os tipos retornados
@@ -570,10 +570,10 @@ public class TypeCheckVisitor extends Visitor {
 
             SType tipoExpressao = stk.pop();
 
-            if (tipoExpressao instanceof STyData) {
+            if (tipoExpressao instanceof STypeData) {
                 if ((temp.get(lvalue.getId()) == null)) { // Variavel de data nao existe
-                    String name = ((STyData)tipoExpressao).getName();
-                    STyData newData = new STyData(name);
+                    String name = ((STypeData)tipoExpressao).getName();
+                    STypeData newData = new STypeData(name);
 
                     if (datas.get(name) == null) {
                         logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): O tipo de Data " + name + " ainda nao foi declarado.");
@@ -622,7 +622,7 @@ public class TypeCheckVisitor extends Visitor {
                     a.getExp().accept(this);       
 
                     SType st = stk.pop();
-                    STyArr arr = new STyArr(st);
+                    STypeArray arr = new STypeArray(st);
 
                     // adiciona o array no contexto, com o tipo dado pela expressão
                     temp.set(matriz.getId(), arr);
@@ -660,7 +660,7 @@ public class TypeCheckVisitor extends Visitor {
                     a.getExp().accept(this);       
 
                     SType st = stk.pop();
-                    STyArr arr = new STyArr(st);
+                    STypeArray arr = new STypeArray(st);
 
                     // adiciona o array no contexto, com o tipo dado pela expressão
                     temp.set(lvalue.getId(), arr);
@@ -742,7 +742,7 @@ public class TypeCheckVisitor extends Visitor {
             for(int i = 0; i < funcFinded.size(); i++){
                 LocalAmbiente<SType> funcaoBase = funcFinded.get(i);
 
-                STyFun funcaoBaseTipo = (STyFun)funcaoBase.getFuncType();
+                STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
 
                 // Se a funcao tem o mesmo numero de parametros
                 if(funcaoBaseTipo.getTypes().length == qtdParamPassados){
@@ -800,7 +800,7 @@ public class TypeCheckVisitor extends Visitor {
             // monta o parametro da função
             if (f.getFCallParams() != null) {
 
-                STyFun tipoFuncao = (STyFun) function.getFuncType();
+                STypeFun tipoFuncao = (STypeFun) function.getFuncType();
 
                 int indiceParamPassado = 0;
 
@@ -834,8 +834,8 @@ public class TypeCheckVisitor extends Visitor {
             // Retorno da função para as duas variaveis determinadas
             if (f.getLValues() != null) {
                 // Garante que a função tem retorno e seja a mesma quantidade solicitada pelo usuario
-                if(((STyFun)function.getFuncType()).getReturnTypes() != null &&
-                f.getLValues().size() == ((STyFun)function.getFuncType()).getReturnTypes().length){
+                if(((STypeFun)function.getFuncType()).getReturnTypes() != null &&
+                f.getLValues().size() == ((STypeFun)function.getFuncType()).getReturnTypes().length){
                     List<LValue> ret = f.getLValues();
                     int it = ret.size() - 1;
 
@@ -843,16 +843,16 @@ public class TypeCheckVisitor extends Visitor {
                     // Desempilhado do direita pra esquerda
                     for (LValue l : ret) {
                         if(temp.get(ret.get(it).getId()) != null){  // Variavel existe, entao tem um tipo
-                            if(temp.get(ret.get(it).getId()).match(((STyFun)function.getFuncType()).getReturnTypes()[it])){     // Verifica se o tipo bate com o retorno da função
-                                temp.set(ret.get(it).getId(), ((STyFun)function.getFuncType()).getReturnTypes()[it]);
+                            if(temp.get(ret.get(it).getId()).match(((STypeFun)function.getFuncType()).getReturnTypes()[it])){     // Verifica se o tipo bate com o retorno da função
+                                temp.set(ret.get(it).getId(), ((STypeFun)function.getFuncType()).getReturnTypes()[it]);
                             }
                             else{
-                                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): A variavel \'" + ret.get(it).getId() + "\' ja existe e seu tipo eh \'" + temp.get(ret.get(it).getId()) + "\' e portanto, nao pode receber o valor do tipo \'" + ((STyFun)function.getFuncType()).getReturnTypes()[it] + "\' retornado pela funcao \'" + f.getId() + "\'");
+                                logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + "): A variavel \'" + ret.get(it).getId() + "\' ja existe e seu tipo eh \'" + temp.get(ret.get(it).getId()) + "\' e portanto, nao pode receber o valor do tipo \'" + ((STypeFun)function.getFuncType()).getReturnTypes()[it] + "\' retornado pela funcao \'" + f.getId() + "\'");
                                 stk.push(tyErr);
                             }
                         }
                         else{
-                            temp.set(ret.get(it).getId(), ((STyFun)function.getFuncType()).getReturnTypes()[it]);
+                            temp.set(ret.get(it).getId(), ((STypeFun)function.getFuncType()).getReturnTypes()[it]);
                         }
                         it--;
                     }
@@ -860,7 +860,7 @@ public class TypeCheckVisitor extends Visitor {
                     }
                 else{   // A função não tem retorno ou é menor que o numero de retornos solicitados pelo usuario
                     logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn()
-                    + "): Na chamada da funcao foram solicitados \'" + f.getLValues().size()+"\' retorno(s) mas a funcao original apresenta " + ((STyFun)function.getFuncType()).getReturnTypes().length + " retorno(s) !");
+                    + "): Na chamada da funcao foram solicitados \'" + f.getLValues().size()+"\' retorno(s) mas a funcao original apresenta " + ((STypeFun)function.getFuncType()).getReturnTypes().length + " retorno(s) !");
                     stk.push(tyErr);
                 }
             }
@@ -1093,7 +1093,7 @@ public class TypeCheckVisitor extends Visitor {
                 SType tipoArray = stk.pop();
 
                 // Cria o tipo de array com referencia ao tipo primitivo informado
-                STyArr array = new STyArr(tipoArray);
+                STypeArray array = new STypeArray(tipoArray);
                 stk.add(array);
             } else { // new Int;
                 // Empilha o tipo da variavel e no attribution certifica se é valido
@@ -1102,7 +1102,7 @@ public class TypeCheckVisitor extends Visitor {
         } else {
             if (t.getExp() == null) { // Tipo normal de data
                 if(datas.get(t.getDataName()) != null){ // Tipo data existe
-                    STyData tyData = new STyData(t.getDataName());
+                    STypeData tyData = new STypeData(t.getDataName());
                     // Empilha o tipo da variavel e no attribution certifica se é valido
                     stk.add(tyData);
                 }
@@ -1123,10 +1123,10 @@ public class TypeCheckVisitor extends Visitor {
                 }
 
                 if(datas.get(t.getDataName()) != null){ // Tipo data existe
-                    STyData tyData = new STyData(t.getDataName());
+                    STypeData tyData = new STypeData(t.getDataName());
 
                     // Cria o tipo de array com referencia ao tipo primitivo informado
-                    STyArr array = new STyArr(tyData);
+                    STypeArray array = new STypeArray(tyData);
                     stk.add(array);
                 }
                 else{
@@ -1167,7 +1167,7 @@ public class TypeCheckVisitor extends Visitor {
             for(int i = 0; i < funcFinded.size(); i++){
                 LocalAmbiente<SType> funcaoBase = funcFinded.get(i);
 
-                STyFun funcaoBaseTipo = (STyFun)funcaoBase.getFuncType();
+                STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
 
                 // Se a funcao tem o mesmo numero de parametros
                 if(funcaoBaseTipo.getTypes().length == qtdParamPassados){
@@ -1223,7 +1223,7 @@ public class TypeCheckVisitor extends Visitor {
 
             if (f.getFCallParams() != null) {
 
-                STyFun tipoFuncao = (STyFun) function.getFuncType();
+                STypeFun tipoFuncao = (STypeFun) function.getFuncType();
 
                 int tempID = 0;
 
@@ -1267,7 +1267,7 @@ public class TypeCheckVisitor extends Visitor {
                 }
             }
             else{
-                STyFun tipoFuncao = (STyFun) function.getFuncType();
+                STypeFun tipoFuncao = (STypeFun) function.getFuncType();
 
                 if(tipoFuncao.getTypes().length > 0){   // Tem parametros na declaracao da funcao mas nao tem na chamada dela
                     logError.add("(" + getLineNumber()+ ") Erro em (linha: " + f.getLine() + ", coluna: " + f.getColumn() + 
@@ -1294,7 +1294,7 @@ public class TypeCheckVisitor extends Visitor {
         // Se uma variavel for passada como posicao, simplesmente essa checagem de retorno não é feita
         if(!(f.getExpIndex() instanceof Identifier)){   // Se nao for variavel
             if(positionReturnFunction != null && positionReturnFunction instanceof IntegerNumber){
-                STyFun tipoFuncao = (STyFun) function.getFuncType();
+                STypeFun tipoFuncao = (STypeFun) function.getFuncType();
                 IntegerNumber posicao = (IntegerNumber)positionReturnFunction;
                 stk.push(tipoFuncao.getReturnTypes()[posicao.getValue()]);
             }
@@ -1303,7 +1303,7 @@ public class TypeCheckVisitor extends Visitor {
             // Como nao temos acesso ao valor numerico e olhamos só o tipo
             // Ficaria complicado afirmar se o retorno está com o tipo certo caso fosse uma variavel
             // Sendo que empilhamos somente o tipo e não o valor inteiro
-            STyFun tipoFuncao = (STyFun) function.getFuncType();
+            STypeFun tipoFuncao = (STypeFun) function.getFuncType();
             IntegerNumber posicao = (IntegerNumber)positionReturnFunction;
             for(int i = 0; i < tipoFuncao.getReturnTypes().length; i++){
                 stk.push(tipoFuncao.getReturnTypes()[i]);
@@ -1336,9 +1336,9 @@ public class TypeCheckVisitor extends Visitor {
     public void visit(DataAccess d) {
 
         // Certifica a existencia do tipo data passado no escopo atual
-        if (temp.get(d.getDataId()) instanceof STyData) {
+        if (temp.get(d.getDataId()) instanceof STypeData) {
 
-            STyData dataType = (STyData) temp.get(d.getDataId());
+            STypeData dataType = (STypeData) temp.get(d.getDataId());
 
             if (datas.get(dataType.getName()) == null) {
                 logError.add("(" + getLineNumber()+ ") Erro em (linha: "+d.getLine() + ", coluna: " + d.getColumn() 
@@ -1399,12 +1399,12 @@ public class TypeCheckVisitor extends Visitor {
             }
 
         }
-        else if (temp.get(d.getLValue().getId()) instanceof STyArr) {    // Verifica se é array de data
+        else if (temp.get(d.getLValue().getId()) instanceof STypeArray) {    // Verifica se é array de data
 
             // Empilha o tipo do array/matriz
             d.getLValue().accept(this);
 
-            STyData dataType = (STyData) stk.pop();
+            STypeData dataType = (STypeData) stk.pop();
             // STyArr arrayType = (STyArr) temp.get(d.getLValue().getId());
             // STyData dataType = (STyData) arrayType.getArg();
 
@@ -1446,8 +1446,8 @@ public class TypeCheckVisitor extends Visitor {
         if(a.getLValue() instanceof Identifier){    // Já for a variavel entao é um array
             if(temp.get(a.getLValue().getId()) != null){
                 SType tipoAux = temp.get(a.getLValue().getId());
-                if(tipoAux instanceof STyArr){
-                    SType argumento = ((STyArr)tipoAux).getArg();
+                if(tipoAux instanceof STypeArray){
+                    SType argumento = ((STypeArray)tipoAux).getArg();
                     stk.push(argumento);           // Empilha o tipo do array
                 }
             }
@@ -1459,11 +1459,11 @@ public class TypeCheckVisitor extends Visitor {
         else if(a.getLValue() instanceof ArrayAccess){   // é matriz
             if(temp.get(a.getLValue().getId()) != null){
                 SType tipoAux = temp.get(a.getLValue().getId());
-                if(tipoAux instanceof STyArr){
-                    SType argumento = ((STyArr)tipoAux).getArg();
-                    if(argumento instanceof STyArr ){
-                        SType tipoMatriz = ((STyArr)argumento).getArg();
-                        if(tipoMatriz instanceof STyArr){
+                if(tipoAux instanceof STypeArray){
+                    SType argumento = ((STypeArray)tipoAux).getArg();
+                    if(argumento instanceof STypeArray){
+                        SType tipoMatriz = ((STypeArray)argumento).getArg();
+                        if(tipoMatriz instanceof STypeArray){
                             logError.add("(" + getLineNumber()+ ") Erro em (linha: " + a.getLine() + ", coluna: " + a.getColumn() + "): Nao eh possivel uma matriz no formato "+ tipoAux + "!!");
                             stk.push(tyErr);
                         }

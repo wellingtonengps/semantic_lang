@@ -5,23 +5,21 @@
 
 package lang.semantic;
 
-import lang.semantic.*;
-
 // Define o tipo int para a analise semantica no TypeCheckVisitor
-public class STyInt extends SType {
+public class STypeInt extends SType {
 
-    private static STyInt st = new STyInt();
+    private static STypeInt st = new STypeInt();
 
-    private STyInt() {
+    private STypeInt() {
     }
 
-    public static STyInt newSTyInt() {
+    public static STypeInt newSTyInt() {
         return st;
     }
 
     @Override
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyInt);
+        return (v instanceof STypeError) || (v instanceof STypeInt);
     }
 
     @Override

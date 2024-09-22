@@ -5,10 +5,10 @@
 package lang.semantic;
 
 // Define o tipo array para a analise semantica no TypeCheck
-public class STyArr extends SType{
+public class STypeArray extends SType{
     private SType a;
 
-    public STyArr(SType t) {
+    public STypeArray(SType t) {
         a = t;
     }
 
@@ -19,7 +19,7 @@ public class STyArr extends SType{
     @Override
     public boolean match(SType v) {
         // Verifica se é array e o tipo do array
-        return (v instanceof STyErr) || (v instanceof STyArr) && (a.match(((STyArr) v).getArg()));
+        return (v instanceof STypeError) || (v instanceof STypeArray) && (a.match(((STypeArray) v).getArg()));
     }
 
     @Override

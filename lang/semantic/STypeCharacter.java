@@ -5,19 +5,19 @@
 package lang.semantic;
 
 // Define o tipo char para a analise semantica no TypeCheckVisitor
-public class STyCharacter extends SType {
+public class STypeCharacter extends SType {
 
-    private static STyCharacter st = new STyCharacter();
+    private static STypeCharacter st = new STypeCharacter();
 
-    private STyCharacter(){
+    private STypeCharacter(){
     }
 
-    public static STyCharacter newSTyCharacter() {
+    public static STypeCharacter newSTyCharacter() {
         return st;
     }
 
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyCharacter);
+        return (v instanceof STypeError) || (v instanceof STypeCharacter);
     }
 
     public String toString() {

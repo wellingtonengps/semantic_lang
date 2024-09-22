@@ -5,18 +5,18 @@
 package lang.semantic;
 
 // Define os tipos de função para a analise semantica no TypeCheckVisitor
-public class STyFun extends SType {
+public class STypeFun extends SType {
     private String id;                  // Nome da função
     private SType parameterType[];      // Tipos do parametro
     private String nameParams[];        // Nome dos parametros
     private SType returnType[];         // Tipos de retorno
 
-    public STyFun(SType t[], SType retornos[]) {
+    public STypeFun(SType t[], SType retornos[]) {
         parameterType = t;
         returnType = retornos;
     }
 
-    public STyFun(SType t[], SType retornos[], String[] names, String nomeFuncao) {
+    public STypeFun(SType t[], SType retornos[], String[] names, String nomeFuncao) {
         parameterType = t;
         returnType = retornos;
         nameParams = names;
@@ -37,11 +37,11 @@ public class STyFun extends SType {
 
     public boolean match(SType v) {
         boolean r = false;
-        if (v instanceof STyFun) {
-            if (((STyFun) v).getTypes().length == parameterType.length) {
+        if (v instanceof STypeFun) {
+            if (((STypeFun) v).getTypes().length == parameterType.length) {
                 r = true;
                 for (int i = 0; i < parameterType.length; i++) {
-                    r = r && parameterType[i].match(((STyFun) v).getTypes()[i]);
+                    r = r && parameterType[i].match(((STypeFun) v).getTypes()[i]);
                 }
             }
         }

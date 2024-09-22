@@ -4,12 +4,12 @@
  */
 package lang.semantic;
 // Define o tipo data para a analise semantica no TypeCheckVisitor
-public class STyData extends SType{
+public class STypeData extends SType{
     private String name;
 
     @Override
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyData);
+        return (v instanceof STypeError) || (v instanceof STypeData);
     }
     
     @Override
@@ -25,7 +25,7 @@ public class STyData extends SType{
         this.name = name;
     }
 
-    public STyData(String name) {
+    public STypeData(String name) {
         this.name = name;
     }
 }

@@ -5,7 +5,7 @@
 package lang.semantic;
 
 // Armazena um ambiente para cada função no Typecheck
-public class LocalAmbiente<A> extends TyEnv<A>{
+public class LocalAmbiente<A> extends Env<A> {
     private String id; 
     private SType t;
     

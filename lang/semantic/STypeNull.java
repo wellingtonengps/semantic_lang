@@ -5,19 +5,19 @@
 package lang.semantic;
 
 // Define o tipo Null para a analise semantica no typeCheckVisitor
-public class STyNull extends SType{
-    private static STyNull st = new STyNull();
+public class STypeNull extends SType{
+    private static STypeNull st = new STypeNull();
 
-    private STyNull() {
+    private STypeNull() {
     }
 
-    public static STyNull newSTyNull() {
+    public static STypeNull newSTyNull() {
         return st;
     }
 
     @Override
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyNull);
+        return (v instanceof STypeError) || (v instanceof STypeNull);
     }
 
     @Override

@@ -4,18 +4,18 @@
  */
 package lang.semantic;
 // Define o tipo booleano para a analise Semantica no TypeCheckVisitor
-public class STyBool extends SType{
-    private static STyBool st = new STyBool();
+public class STypeBoolean extends SType{
+    private static STypeBoolean st = new STypeBoolean();
 
-    private STyBool(){
+    private STypeBoolean(){
     }
 
-    public static STyBool newSTyBool() {
+    public static STypeBoolean newSTyBool() {
         return st;
     }
 
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyBool);
+        return (v instanceof STypeError) || (v instanceof STypeBoolean);
     }
 
     public String toString() {

@@ -10,12 +10,12 @@ import java.util.TreeMap;
 
 // Define o ambiente de variavel ou função que associa o nome da variavel ou funcao 
 // para o tipo correspondente. È utilizado na analise semantica no typeCheckVisitor
-public class TyEnv<A>{
+public class Env<A>{
 
     private TreeMap<String,A> typeEnv;
     private ArrayList<A> typeEnvFuncoes;
 
-    public TyEnv(){
+    public Env(){
        typeEnv = new TreeMap<String,A>();
        typeEnvFuncoes = new ArrayList<A>();
     }

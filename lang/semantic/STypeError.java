@@ -6,14 +6,14 @@ package lang.semantic;
 
 
 // Define o tipo de erro semantico no TypeCheckVisitor
-public class STyErr extends SType {
+public class STypeError extends SType {
 
-    private static STyErr st = new STyErr();
+    private static STypeError st = new STypeError();
 
-    private STyErr() {
+    private STypeError() {
     }
 
-    public static STyErr newSTyErr() {
+    public static STypeError newSTyErr() {
         return st;
     }
 

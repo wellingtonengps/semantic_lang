@@ -5,19 +5,19 @@
 package lang.semantic;
 
 // Define o tipo float para a analise semantica no TypeCheckVisitor
-public class STyFloat extends SType{
-    private static STyFloat st = new STyFloat();
+public class STypeFloat extends SType{
+    private static STypeFloat st = new STypeFloat();
 
-    private STyFloat(){
+    private STypeFloat(){
     }
 
-    public static STyFloat newSTyFloat() {
+    public static STypeFloat newSTyFloat() {
         return st;
     }
 
     @Override
     public boolean match(SType v) {
-        return (v instanceof STyErr) || (v instanceof STyFloat);
+        return (v instanceof STypeError) || (v instanceof STypeFloat);
     }
 
     @Override
