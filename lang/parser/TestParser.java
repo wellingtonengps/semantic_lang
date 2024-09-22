@@ -12,7 +12,7 @@ import java.util.List;
 
 public class TestParser {
    private LangParserImpl adp;
-   private String okSrcs = "src/main/java/org/compiler/Lang/syntactic/testes/sintaxe/certo/";
+   private String okSrcs = "testes/sintaxe/certo/";
    private File f;
    
    public TestParser(LangParserImpl adp){

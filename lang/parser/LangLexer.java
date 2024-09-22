@@ -1,4 +1,4 @@
-// Generated from LangLexer.g4 by ANTLR 4.13.2
+// Generated from lang/parser/LangLexer.g4 by ANTLR 4.13.2
 
 /*
 * Gustavo De Angelis Bartholomeu (201935009)

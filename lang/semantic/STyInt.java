@@ -1,11 +1,9 @@
-package lang.semantic;
+/*
+ * Gustavo De Angelis Bartholomeu (201935009)
+ * Wellington Pereira Silva (201935041)
+ */
 
-/********************************************************
-* Trabalho de Teoria dos Compiladores(DCC045)(2021/1)   *
-*            Linguagem Lang                             *
-* Nome: Lucas Diniz da Costa -- Matricula: 201465524C   *
-*                                                       *
-*********************************************************/
+package lang.semantic;
 
 import lang.semantic.*;
 

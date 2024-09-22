@@ -45,7 +45,7 @@ public class InterpreterVisitor extends Visitor{
 
         for (Function f : p.getFunctions()) {
             funcs.put(f.getId(), f);
-            if (f.getId().equals("main_")) {
+            if (f.getId().equals("main")) {
                 main = f;
             }
         }

@@ -66,7 +66,6 @@ public class VisitorAdapter extends LangParserBaseVisitor<Node> {
         );
     }
 
-
     @Override
     public Node visitFunction(FunctionContext ctx) {
         // ----- Regra
