@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "----  LIMPA, CONSTROI E COMPILA TODO O PROJETO(PROCESSO COMPLETO) ----"
 
 # Limpando os arquivos antigos
 echo "----  Limpando o projeto ----"
@@ -20,6 +19,8 @@ rm -f lang/parser/LangListener.*
 rm -f lang/parser/LangParserListener.*
 rm -f lang/parser/LangParserVisitor.*
 rm -f lang/ast/*.class
+rm -f lang/codeGen/*.class
+rm -f lang/codeGen/fileGen/*
 
 # Gera as classes java do interpretador
 echo "----  Gera as classes java do interpretador ----"
@@ -32,8 +33,10 @@ javac -cp library/antlr-4.13.2-complete.jar:. -d . lang/parser/*.java
 javac -cp library/antlr-4.13.2-complete.jar:. -d . lang/interpreter/*.java
 javac -cp library/antlr-4.13.2-complete.jar:. -d . lang/semantic/*.java
 
+javac -cp library/antlr-4.13.2-complete.jar:lib/ST-4.3.4.jar:. -d . lang/codeGen/*.java
+
 # Compila a classe LangCompiler
 echo "----  Compila a classe LangCompiler ----"
 javac -cp library/antlr-4.13.2-complete.jar:. -d . lang/LangCompiler.java
 
-echo "----  PROCESSO DE BUILD CONCLUIDO ----"
+echo "----  Build completa ----"

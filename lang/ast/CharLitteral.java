@@ -55,6 +55,14 @@ public class CharLitteral extends LValue{
         return value;
     }
 
+    public String getOriginalString(){
+        return originalValue;
+    }
+
+    public void setOriginalString(String origin){
+        this.originalValue = origin;
+    }
+
     @Override
     public String toString(){
         return value + "";

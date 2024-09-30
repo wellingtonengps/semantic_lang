@@ -5,13 +5,16 @@
 
 package lang;
 
+import lang.codeGen.CPlusPlusVisitor;
 import lang.parser.*;
 import lang.ast.*;
 import lang.interpreter.*;
 import lang.semantic.*;
 
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class LangCompiler {
-    // Recupera o nome base (sem extensão) de um arquivo.
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Lang compiler v 0.0.1 - Agosto de 2021");
@@ -30,14 +33,12 @@ public class LangCompiler {
             System.out.println(" -dti: Verificar tipos, imprimir o ambiente de tipos e depois interpretar");
             System.out.println(
                     " -gvz: Create a dot file. (Feed it to graphviz dot tool to generate graphical representation of the AST)");
-
+            System.out.println(" -s: Gerar código de alto nível");
+            System.out.println(" -j: Gerar código para JVM (Via Jasmin");
         }
         try {
             if(args.length < 1){
-                System.out.println(" Nao foram passados parametros com local(nome) de arquivo ou acao para ser executada.");
-                System.out.println("--------------------------");
-                System.out.println("| Abortando o programa !!!");
-                System.out.println("--------------------------");
+                System.out.println("Não foi passado parametros");
                 return;
             }
             LangParserImpl parserImplementation = new LangParserImpl();
@@ -61,66 +62,67 @@ public class LangCompiler {
                 System.out.println("\nFim da execucao.\n");
                 return;
             }
+
             if (args.length != 2) {
                 System.out.println("Para usar essa opção, especifique um nome de arquivo");
                 return;
             }
             SuperNode result = parserImplementation.parseFile(args[1]);
-            System.out.println("--------------------------------");
-            System.out.println("\n======> parsing ... [ ok ] \n");
-            System.out.println("--------------------------------");
             if (result == null) {
-                System.err.println("Aborting due to syntax error(s)");
+                System.err.println("Error na sintaxe");
                 System.exit(1);
             } else if (args[0].equals("-i")) {
-                // Interpreta o Visitor e elabora o ambiente de desenvolvimento
                 InterpreterVisitor interpreter = new InterpreterVisitor();
-                
-                System.out.println("\n---------- Execuntando o Interpretador ------------\n");
-
-                ((Node)result).accept(interpreter);               // Passa o node criado e testa o interpretador
+                ((Node)result).accept(interpreter);
             } else if (args[0].equals("-ii")) {
                 // iv = new InteractiveInterpreterVisitor();
                 // result.accept(iv);
             } else if (args[0].equals("-tp")) {
-                // Checa o tipo e a parte semantica elabora o ambiente de desenvolvimento
-                TypeCheckVisitor typeCheck = new TypeCheckVisitor();  
-                
-                // Aceita o nó e caminha na árvore
-                ((Node)result).accept(typeCheck);               
-                
-                System.out.println("\n\n---------- Checagem de tipos ------------");
+                TypeCheckVisitor typeCheck = new TypeCheckVisitor();
+                ((Node)result).accept(typeCheck);
                 if(typeCheck.getNumErrors() > 0){
                     typeCheck.printErrors();
                  }else{
                     System.out.println("typing check ... [ ok ]"); 
                  }
-                System.out.println("\n------------------------------------------\n");
-            
             } 
             else if (args[0].equals("-ti")) {
-                // Checa a parte semantica e elabora o ambiente de desenvolvimento
-                TypeCheckVisitor typeCheck = new TypeCheckVisitor();  
-                
-                // Aceita o nó e caminha na árvore
+                TypeCheckVisitor typeCheck = new TypeCheckVisitor();
                 ((Node)result).accept(typeCheck);               
                 
                 if(typeCheck.getNumErrors() > 0){
                     typeCheck.printErrors();
                  }else{
-                    System.out.println("--------------------------------");
-                    System.out.println("\n======> typing check ... [ ok ]\n"); 
-                    System.out.println("--------------------------------\n");
-                    // Interpreta o Visitor e elabora o ambiente de desenvolvimento
                     InterpreterVisitor interpreter = new InterpreterVisitor();
-                    
-                    System.out.println("\n---------- Executando o Interpretador ------------\n");
-                    // Aceita o nó e caminha na árvore
-                    ((Node)result).accept(interpreter);               // Passa o node criado e testa o interpretador
-
-                    System.out.println("\n--------------------------------------------------\n");
+                    ((Node)result).accept(interpreter);
                  }
-            } 
+            }
+            else if(args[0].equals("-s")){
+                TypeCheckVisitor typeCheck = new TypeCheckVisitor();
+                ((Node)result).accept(typeCheck);
+
+                //Verifica se tem se encontra error no Parser
+                if(typeCheck.getNumErrors() != 0){
+                    System.out.println("Error na analise semantica.\n");
+                    typeCheck.printErrors();
+                    System.exit(1);
+                }
+
+                Env<LocalAmbiente<SType>> env = typeCheck.getEnv();
+                String fileName = getFileName(args[1]);
+
+                CPlusPlusVisitor cPlusPlusVisitor;
+
+                cPlusPlusVisitor = new CPlusPlusVisitor(fileName, env, typeCheck.getDatas());
+                ((Node)result).accept(cPlusPlusVisitor);
+
+                //mostrar na tela o código gerado
+                //System.out.println(cPlusPlusVisitor.getTemplate());
+
+                String filePath = "lang/codeGen/fileGen/" + fileName + ".cpp";
+                System.out.println("Arquivo gerado salvo: " + filePath);
+                writeFile(filePath, cPlusPlusVisitor.getTemplate());
+            }
             else if (args[0].equals("-pp")) {
                 // iv = new PPrint();
                 // result.accept(iv);
@@ -130,4 +132,23 @@ public class LangCompiler {
             e.printStackTrace();
         }
     }
+
+    public static String getFileName(String path){
+        String fileName = path.substring(path.lastIndexOf('/') != -1 ? path.lastIndexOf('/') + 1 : 0,
+                path.lastIndexOf('.') != -1 ? path.lastIndexOf('.') : path.length());
+        return fileName;
+    }
+
+
+    public static void writeFile(String pathFile, String information){
+        try {
+            FileWriter myWriter = new FileWriter(pathFile);
+            myWriter.write(information);
+            myWriter.close();
+        } catch (IOException e) {
+            System.out.println("Ocorreu um erro no metodo \'writeFile()\'");
+            e.printStackTrace();
+        }
+    }
 }
+

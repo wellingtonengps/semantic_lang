@@ -6,6 +6,7 @@
 package lang.semantic;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.TreeMap;
 
 // Define o ambiente de variavel ou função que associa o nome da variavel ou funcao 
@@ -61,5 +62,10 @@ public class Env<A>{
         }
         return s;*/
     }
-    
+
+    public Set<String> getKeys() {
+        return typeEnv.keySet();
+    }
+
+
 }

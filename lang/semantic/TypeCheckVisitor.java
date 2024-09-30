@@ -56,6 +56,10 @@ public class TypeCheckVisitor extends Visitor {
         return logError.size();
     }
 
+    public Env<LocalAmbiente<SType>> getEnv() {return env;}
+
+    public HashMap<String, DataAttributes> getDatas(){ return datas;}
+
     // Método para formatar mensagem de erro
     private String formatError(int linha, int coluna, String message) {
         return "Em [" + linha + ":" + coluna + "]: " + message;
