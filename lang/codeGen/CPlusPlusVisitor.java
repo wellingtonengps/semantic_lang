@@ -67,6 +67,7 @@ public class CPlusPlusVisitor extends Visitor {
         template.add("datas", datas);
 
         funcs = new ArrayList<ST>();
+        funcPrototypes = new ArrayList<ST>();
 
         // Checa as funções
         for (Function f : p.getFunctions()) {
@@ -135,6 +136,7 @@ public class CPlusPlusVisitor extends Visitor {
         ST funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
         ST fun = groupTemplate.getInstanceOf("func");
 
+
         fun.add("name", f.getId());
         // Pega todas as funções que tem o mesmo nome
         ArrayList<LocalAmbiente> funcFinded = (ArrayList) env.getFuncoes(f.getId());
@@ -187,10 +189,16 @@ public class CPlusPlusVisitor extends Visitor {
                 f.getReturnTypes().get(0).accept(this); // Empilha o único tipo de retorno que será o tipo da função
                 fun.add("type", type);
 
-                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
-                funcPrototype.add("name", nomeFuncao);
-                funcPrototype.add("type", type);
+                //funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
+                //funcPrototype.add("name", nomeFuncao);
+                //funcPrototype.add("type", type);
             }
+
+
+            funcPrototype.add("name", fun.getAttribute("name")); // Add name to the prototype
+            funcPrototype.add("type", fun.getAttribute("type")); // Add type to the prototype
+            funcPrototype.add("params", params);                 // Add params to the prototype
+            funcPrototypes.add(funcPrototype);
 
             // Declaração das variaveis que são usadas no corpo da função
             Set<String> keys = local.getKeys();
@@ -220,7 +228,7 @@ public class CPlusPlusVisitor extends Visitor {
                 }
             }
             fun.add("params", params);
-            funcPrototype.add("params", params);
+            //funcPrototype.add("params", params);
 
             // Instancia as variaveis antes de usar nas operações presente no corpo da função
             for (String key : keys) {
@@ -270,9 +278,10 @@ public class CPlusPlusVisitor extends Visitor {
                 String nomeFuncao = f.getId() + "_retorno_0" + idRetorno;
                 fun.add("name", nomeFuncao);
 
-                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
-                funcPrototype.add("name", nomeFuncao);
-                funcPrototype.add("type", type);
+
+                //funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
+                //funcPrototype.add("name", nomeFuncao);
+                //funcPrototype.add("type", type);*/
 
                 // Empilha o tipo de retorno da função
                 f.getReturnTypes().get(idRetorno).accept(this);
@@ -307,8 +316,8 @@ public class CPlusPlusVisitor extends Visitor {
                     }
                 }
                 fun.add("params", params);
-                funcPrototype.add("params", params);
-                funcPrototypes.add(funcPrototype);
+                //funcPrototype.add("params", params);
+                //funcPrototypes.add(funcPrototype);
 
                 // Instancia as variaveis antes de usar nas operações presente no corpo da função
                 for (String key : keys) {
@@ -333,10 +342,18 @@ public class CPlusPlusVisitor extends Visitor {
                 }
 
 
+                funcPrototype.add("name", fun.getAttribute("name")); // Add name to the prototype
+                funcPrototype.add("type", type);                     // Add type to the prototype
+                funcPrototype.add("params", params);                 // Add params to the prototype
+                funcPrototypes.add(funcPrototype);                   // Add the prototype to the list
+
+
+
                 funcs.add(fun);
-                funcPrototypes.add(funcPrototype);
                 idRetorno++;
+                //funcPrototypes.add(funcPrototype);
             }
+
         }
     }
 
