@@ -6,6 +6,7 @@
 package lang;
 
 import lang.codeGen.CPlusPlusVisitor;
+import lang.codeGen.JavaVisitor;
 import lang.parser.*;
 import lang.ast.*;
 import lang.interpreter.*;
@@ -83,7 +84,7 @@ public class LangCompiler {
                 if(typeCheck.getNumErrors() > 0){
                     typeCheck.printErrors();
                  }else{
-                    System.out.println("typing check ... [ ok ]"); 
+                    System.out.println("Checagem de tipo realizada");
                  }
             } 
             else if (args[0].equals("-ti")) {
@@ -122,6 +123,27 @@ public class LangCompiler {
                 String filePath = "lang/codeGen/fileGen/" + fileName + ".cpp";
                 System.out.println("Arquivo gerado salvo: " + filePath);
                 writeFile(filePath, cPlusPlusVisitor.getTemplate());
+            }
+            else if(args[0].equals("-j")) {
+                TypeCheckVisitor typeCheck = new TypeCheckVisitor();
+                ((Node)result).accept(typeCheck);
+
+                if(typeCheck.getNumErrors() != 0) {
+                    System.out.println("Error na analise semantica.\n");
+                    typeCheck.printErrors();
+                    System.exit(1);
+                }
+
+                Env<LocalAmbiente<SType>> env = typeCheck.getEnv();
+                String fileName = getFileName(args[1]);
+                JavaVisitor javaVisitor;
+
+                javaVisitor = new JavaVisitor(fileName, env, typeCheck.getDatas());
+                ((Node)result).accept(javaVisitor);
+
+                String filePath = "lang/codeGen/fileGen/" + fileName + ".java";
+                System.out.println("Arquivo gerado salvo: " + filePath);
+                writeFile(filePath, javaVisitor.getTemplate());
             }
             else if (args[0].equals("-pp")) {
                 // iv = new PPrint();

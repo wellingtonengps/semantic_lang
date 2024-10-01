@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class CPlusPlusVisitor extends Visitor{
+public class CPlusPlusVisitor extends Visitor {
     private STGroup groupTemplate;
     private ST type, stmt, expr, variavel;
     private ST template;    // Armazena todo o código do programa
@@ -49,6 +49,7 @@ public class CPlusPlusVisitor extends Visitor{
         this.env = env;
         this.datasAttrib = datasAttrib;
         functionsAST = new ArrayList<Function>();
+        funcPrototypes = new ArrayList<ST>();
         datasAST = new HashMap<String, Data>();
     }
 
@@ -66,30 +67,31 @@ public class CPlusPlusVisitor extends Visitor{
         template.add("datas", datas);
 
         funcs = new ArrayList<ST>();
-        funcPrototypes = new ArrayList<ST>();
 
         // Checa as funções
         for (Function f : p.getFunctions()) {
             functionsAST.add(f);
-
             f.accept(this);
         }
+
         template.add("funcs", funcs);
         template.add("funcPrototypes", funcPrototypes);
 
         // System.out.println(template.render()); // Imprime na tela o código em alto nivel gerado
     }
 
-    public String getTemplate(){
+    public String getTemplate() {
         return template.render();
     }
 
     // Retorna o ambiente de geração de código
-    public Env<LocalAmbiente<SType>> getEnv() {return env;}
+    public Env<LocalAmbiente<SType>> getEnv() {
+        return env;
+    }
 
     // https://www.techiedelight.com/get-current-line-number-java/
     // Retorna a linha do código fonte ao passar pela instrução
-    public int getLineNumber(){
+    public int getLineNumber() {
         // return new Throwable().getStackTrace()[0].getLineNumber();
         return Thread.currentThread().getStackTrace()[2].getLineNumber();
     }
@@ -104,14 +106,13 @@ public class CPlusPlusVisitor extends Visitor{
         List<Declaration> listaDeclaracoes = d.getDeclarations();
         int indiceTipo = 0;
         declarations.clear();
-        for(Declaration declaration : listaDeclaracoes){
+        for (Declaration declaration : listaDeclaracoes) {
             ST decl = groupTemplate.getInstanceOf("declaration");
             SType tipo = dataElement.getTipos().get(indiceTipo);
             decl.add("name", declaration.getId());
-            if(tipo instanceof STypeArray){
-                adjustSTyArr((STypeArray)tipo);
-            }
-            else{
+            if (tipo instanceof STypeArray) {
+                adjustSTyArr((STypeArray) tipo);
+            } else {
                 processSType(tipo);
             }
             decl.add("type", type);
@@ -132,34 +133,34 @@ public class CPlusPlusVisitor extends Visitor{
     @Override
     public void visit(Function f) {
         ST funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
-
         ST fun = groupTemplate.getInstanceOf("func");
+
         fun.add("name", f.getId());
         // Pega todas as funções que tem o mesmo nome
-        ArrayList<LocalAmbiente> funcFinded = (ArrayList)env.getFuncoes(f.getId());
+        ArrayList<LocalAmbiente> funcFinded = (ArrayList) env.getFuncoes(f.getId());
 
         // Só uma funcao
-        LocalAmbiente<SType> local = (LocalAmbiente<SType>)funcFinded.get(0);
-        if(funcFinded.size() > 1){  // Tem sobrecarga
-            for(int i = 0; i < funcFinded.size(); i++){
+        LocalAmbiente<SType> local = (LocalAmbiente<SType>) funcFinded.get(0);
+        if (funcFinded.size() > 1) {  // Tem sobrecarga
+            for (int i = 0; i < funcFinded.size(); i++) {
                 LocalAmbiente<SType> funcaoBase = funcFinded.get(i);
-                STypeFun funcaoBaseTipo = (STypeFun)funcaoBase.getFuncType();
+                STypeFun funcaoBaseTipo = (STypeFun) funcaoBase.getFuncType();
 
                 // Se a funcao tem o mesmo numero de parametros entao pode ser a correta
-                if(funcaoBaseTipo.getTypes().length == f.getParameters().getType().size()){
+                if (funcaoBaseTipo.getTypes().length == f.getParameters().getType().size()) {
                     int counterTypes = 0;   // Conta os tipos iguais para achar a funcao certa
-                    for(int j = 0; j < funcaoBaseTipo.getTypes().length; j++){
+                    for (int j = 0; j < funcaoBaseTipo.getTypes().length; j++) {
 
                         // Compara pelo nome dos tipos pq se for tentar usar o 'equals' entre os tipos
                         // Da problema pois sao regioes diferentes de memoria
-                        if(funcaoBaseTipo.getTypes()[j].toString().equals(
-                                ((Type)f.getParameters().getSingleType(j)).toString()   // Compara com o tipo da funcao
-                        )){
+                        if (funcaoBaseTipo.getTypes()[j].toString().equals(
+                                ((Type) f.getParameters().getSingleType(j)).toString()   // Compara com o tipo da funcao
+                        )) {
                             counterTypes++;
                         }
                     }
-                    if(counterTypes == funcaoBaseTipo.getTypes().length ){
-                        local = (LocalAmbiente<SType>)funcFinded.get(i);
+                    if (counterTypes == funcaoBaseTipo.getTypes().length) {
+                        local = (LocalAmbiente<SType>) funcFinded.get(i);
                         break;
                     }
                 }
@@ -169,25 +170,25 @@ public class CPlusPlusVisitor extends Visitor{
         // Variavel que armazena qual função está sendo observada para poder verificar tipos e valores
         funcaoAtualObservada = local;
 
-        if(f.getReturnTypes().size() < 2){
-            if(f.getReturnTypes().size() == 0){ // void => 0 retornos
-                if(f.getId().equals("main")){   // Função 'main' pra C++ tem retornar valor inteiro
+        if (f.getReturnTypes().size() < 2) {
+            if (f.getReturnTypes().size() == 0) { // void => 0 retornos
+                if (f.getId().equals("main")) {   // Função 'main' pra C++ tem retornar valor inteiro
                     fun.add("type", "int");
-                }
-                else{
+                } else {
                     fun.add("type", "void");
                 }
-            }
-            else if(f.getReturnTypes().size() == 1){    // 1 retorno somente
+            } else if (f.getReturnTypes().size() == 1) {    // 1 retorno somente
                 // A função mesmo com somente 1 retorno terá seu nome alterado
                 fun = groupTemplate.getInstanceOf("func");
-                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
+
 
                 String nomeFuncao = f.getId() + "_retorno_00";
-                funcPrototype.add("name", nomeFuncao);
                 fun.add("name", nomeFuncao);
                 f.getReturnTypes().get(0).accept(this); // Empilha o único tipo de retorno que será o tipo da função
                 fun.add("type", type);
+
+                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
+                funcPrototype.add("name", nomeFuncao);
                 funcPrototype.add("type", type);
             }
 
@@ -206,10 +207,9 @@ public class CPlusPlusVisitor extends Visitor{
                     ST p = groupTemplate.getInstanceOf("param");
                     String nomeParametro = paramsList.getSingleId(i);
                     p.add("name", nomeParametro);
-                    if(t instanceof STypeArray){
-                        adjustSTyArr((STypeArray)t);
-                    }
-                    else{
+                    if (t instanceof STypeArray) {
+                        adjustSTyArr((STypeArray) t);
+                    } else {
                         processSType(t);
                     }
                     p.add("type", type);
@@ -228,10 +228,9 @@ public class CPlusPlusVisitor extends Visitor{
                 // if(!(t instanceof STyArr)){   // Se nao for array declara normalmente
                 ST decl = groupTemplate.getInstanceOf("param");
                 decl.add("name", key);
-                if(t instanceof STypeArray){
-                    adjustSTyArr((STypeArray)t);
-                }
-                else{
+                if (t instanceof STypeArray) {
+                    adjustSTyArr((STypeArray) t);
+                } else {
                     processSType(t);
                 }
                 decl.add("type", type);
@@ -239,7 +238,7 @@ public class CPlusPlusVisitor extends Visitor{
                 // }
             }
 
-            for(int i = 0; i < f.getCommands().size(); i++){
+            for (int i = 0; i < f.getCommands().size(); i++) {
                 Command command = f.getCommands().get(i);
                 command.accept(this);
                 fun.add("stmt", stmt);
@@ -247,15 +246,14 @@ public class CPlusPlusVisitor extends Visitor{
 
 
             // Adiciona o 'return 0;' na função main do código em C++
-            if(f.getId().equals("main")){
+            if (f.getId().equals("main")) {
                 stmt = groupTemplate.getInstanceOf("return");
-                stmt.add("expr", 0 );  // 'return 0;'
+                stmt.add("expr", 0);  // 'return 0;'
                 fun.add("stmt", stmt);
             }
 
             funcs.add(fun);
-        }
-        else{   // 2 retornos
+        } else {   // 2 retornos
             /**
              * Vai adicionar duas funções da seguinte forma:
              * Exemplo:
@@ -266,17 +264,20 @@ public class CPlusPlusVisitor extends Visitor{
              */
             idRetorno = 0;
             // Para cada tipo de retorno, será criada uma função diferente
-            for(int j = 0; j < f.getReturnTypes().size(); j++){
+            for (int j = 0; j < f.getReturnTypes().size(); j++) {
                 fun = groupTemplate.getInstanceOf("func");
-                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
+
                 String nomeFuncao = f.getId() + "_retorno_0" + idRetorno;
                 fun.add("name", nomeFuncao);
+
+                funcPrototype = groupTemplate.getInstanceOf("funcPrototype");
                 funcPrototype.add("name", nomeFuncao);
+                funcPrototype.add("type", type);
 
                 // Empilha o tipo de retorno da função
                 f.getReturnTypes().get(idRetorno).accept(this);
                 fun.add("type", type);
-                funcPrototype.add("type", type);
+
 
                 // Declaração das variaveis que são usadas no corpo da função
                 Set<String> keys = local.getKeys();
@@ -293,10 +294,9 @@ public class CPlusPlusVisitor extends Visitor{
                         ST p = groupTemplate.getInstanceOf("param");
                         String nomeParametro = paramsList.getSingleId(i);
                         p.add("name", nomeParametro);
-                        if(t instanceof STypeArray){
-                            adjustSTyArr((STypeArray)t);
-                        }
-                        else{
+                        if (t instanceof STypeArray) {
+                            adjustSTyArr((STypeArray) t);
+                        } else {
                             processSType(t);
                         }
                         p.add("type", type);
@@ -316,10 +316,9 @@ public class CPlusPlusVisitor extends Visitor{
                     // if(!(t instanceof STyArr)){   // Se nao for array declara normalmente
                     ST decl = groupTemplate.getInstanceOf("param");
                     decl.add("name", key);
-                    if(t instanceof STypeArray){
-                        adjustSTyArr((STypeArray)t);
-                    }
-                    else{
+                    if (t instanceof STypeArray) {
+                        adjustSTyArr((STypeArray) t);
+                    } else {
                         processSType(t);
                     }
                     decl.add("type", type);
@@ -327,13 +326,15 @@ public class CPlusPlusVisitor extends Visitor{
                     // }
                 }
 
-                for(int i = 0; i < f.getCommands().size(); i++){
+                for (int i = 0; i < f.getCommands().size(); i++) {
                     Command command = f.getCommands().get(i);
                     command.accept(this);
                     fun.add("stmt", stmt);
                 }
 
+
                 funcs.add(fun);
+                funcPrototypes.add(funcPrototype);
                 idRetorno++;
             }
         }
@@ -406,14 +407,13 @@ public class CPlusPlusVisitor extends Visitor{
         ST aux = groupTemplate.getInstanceOf("if");
         i.getExp().accept(this); // Empilha a expressao de verificacao do If
         aux.add("expr", expr);
-        if(i.getCmd() instanceof CommandsList){ // Lista de comandos
-            CommandsList list = (CommandsList)i.getCmd();
+        if (i.getCmd() instanceof CommandsList) { // Lista de comandos
+            CommandsList list = (CommandsList) i.getCmd();
             for (Command command : list.getCommands()) { // Executa os comandos
                 command.accept(this);
                 aux.add("cmd", stmt);
             }
-        }
-        else{   // Processa o unico comando que tem no 'if'
+        } else {   // Processa o unico comando que tem no 'if'
             i.getCmd().accept(this);
             aux.add("cmd", stmt);
         }
@@ -425,25 +425,23 @@ public class CPlusPlusVisitor extends Visitor{
         ST aux = groupTemplate.getInstanceOf("if_else");
         i.getExp().accept(this);// Empilha a expressao de verificacao do If e Else
         aux.add("expr", expr);
-        if(i.getCmd() instanceof CommandsList){ // Lista de comandos
-            CommandsList list = (CommandsList)i.getCmd();
+        if (i.getCmd() instanceof CommandsList) { // Lista de comandos
+            CommandsList list = (CommandsList) i.getCmd();
             for (Command command : list.getCommands()) { // Executa os comandos
                 command.accept(this);
                 aux.add("cmd", stmt);
             }
-        }
-        else{   // Processa o unico comando que tem no 'if'
+        } else {   // Processa o unico comando que tem no 'if'
             i.getCmd().accept(this);
             aux.add("cmd", stmt);
         }
-        if(i.getElseCmd() instanceof CommandsList){ // Lista de comandos do else
-            CommandsList list = (CommandsList)i.getElseCmd();
+        if (i.getElseCmd() instanceof CommandsList) { // Lista de comandos do else
+            CommandsList list = (CommandsList) i.getElseCmd();
             for (Command command : list.getCommands()) { // Executa os comandos
                 command.accept(this);
                 aux.add("els", stmt);
             }
-        }
-        else{   // Processa o unico comando que tem no 'else'
+        } else {   // Processa o unico comando que tem no 'else'
             i.getElseCmd().accept(this); // Executa a verificação de tipos nos comandos do else
             aux.add("els", stmt);
         }
@@ -457,14 +455,13 @@ public class CPlusPlusVisitor extends Visitor{
         aux.add("expr", expr);
         loopAtual++;    // Incrementa o indice do loop atual
         aux.add("loopAtual", String.valueOf(loopAtual));
-        if(i.getCmd() instanceof CommandsList){ // Se for uma lista de comandos no corpo do iterate
-            CommandsList cmdList = (CommandsList)i.getCmd();
-            for(int j = 0; j < cmdList.getCommands().size(); j++){
+        if (i.getCmd() instanceof CommandsList) { // Se for uma lista de comandos no corpo do iterate
+            CommandsList cmdList = (CommandsList) i.getCmd();
+            for (int j = 0; j < cmdList.getCommands().size(); j++) {
                 cmdList.getCommands().get(j).accept(this);
                 aux.add("cmd", stmt);
             }
-        }
-        else{
+        } else {
             i.getCmd().accept(this);
             aux.add("cmd", stmt);
         }
@@ -489,13 +486,12 @@ public class CPlusPlusVisitor extends Visitor{
 
     @Override
     public void visit(Return r) {
-        if(r.getExps().size() == 1){
+        if (r.getExps().size() == 1) {
             stmt = groupTemplate.getInstanceOf("return");
             // Processa a expressões de retorno da função
             r.getExps().get(0).accept(this);
             stmt.add("expr", expr);
-        }
-        else{   // Quando a função tem 2 retornos
+        } else {   // Quando a função tem 2 retornos
             stmt = groupTemplate.getInstanceOf("return");
             // Processa a expressões de retorno da função
             r.getExps().get(idRetorno).accept(this);
@@ -518,13 +514,12 @@ public class CPlusPlusVisitor extends Visitor{
             a.getExp().accept(this);
             stmt.add("expr", expr);
         } else if (lvalue instanceof ArrayAccess) {
-            if(((ArrayAccess)lvalue).getLValue() != null && ((ArrayAccess)lvalue).getLValue() instanceof ArrayAccess){   // Trata o caso de matriz
+            if (((ArrayAccess) lvalue).getLValue() != null && ((ArrayAccess) lvalue).getLValue() instanceof ArrayAccess) {   // Trata o caso de matriz
                 stmt.add("var", expr);  //lvalue
                 // Empilha o tipo da expressao que sera atribuida
                 a.getExp().accept(this);
                 stmt.add("expr", expr);
-            }
-            else{   // Array
+            } else {   // Array
                 // aceita a expressao e joga pro topo da pilha. vai verificar posteriormente
                 // dentro do ArrayAccess se casa
                 stmt.add("var", expr);  //lvalue
@@ -544,7 +539,7 @@ public class CPlusPlusVisitor extends Visitor{
 
 
         // VERIFICA se é TypeInstanciate e sua expr chegou null
-        if(expr == null && a.getExp() instanceof TypeInstanciate){
+        if (expr == null && a.getExp() instanceof TypeInstanciate) {
             // new Int, new Float, new Char;
             // Não faz nada pois a declaração da variavel de tipos primitivos já foi feita
             stmt = null;
@@ -566,19 +561,17 @@ public class CPlusPlusVisitor extends Visitor{
         ST aux = groupTemplate.getInstanceOf("functionCall");
         String nomeFuncao = f.getId();
         aux.add("name", nomeFuncao);
-        if(f.getLValues().size() > 0){  // Tem variaveis para atribuição
-            if(f.getLValues().size() == 1){
+        if (f.getLValues().size() > 0) {  // Tem variaveis para atribuição
+            if (f.getLValues().size() == 1) {
                 f.getLValues().get(0).accept(this);
                 aux.add("var1", expr);
-            }
-            else if(f.getLValues().size() == 2){
+            } else if (f.getLValues().size() == 2) {
                 f.getLValues().get(0).accept(this);
                 aux.add("var1", expr);
                 f.getLValues().get(1).accept(this);
                 aux.add("var2", expr);
             }
-        }
-        else{   // Função sem retornos
+        } else {   // Função sem retornos
             aux = groupTemplate.getInstanceOf("call");
             aux.add("name", nomeFuncao);
         }
@@ -752,12 +745,12 @@ public class CPlusPlusVisitor extends Visitor{
 
         if (t.getType() != null) {
             if (t.getExp() != null) { // Array comum e Array de data
-                if(t.getType() instanceof TypeArray){   // Matriz
+                if (t.getType() instanceof TypeArray) {   // Matriz
                     // Troca o modo de criação da matriz
                     // Na Lang: ... new Char[][5]
                     // Outras linguagens: ... new Char[5][]
 
-                    TypeArray tArray = (TypeArray)t.getType();
+                    TypeArray tArray = (TypeArray) t.getType();
                     ST typeArray = groupTemplate.getInstanceOf("array_type");
                     ST lvalue = groupTemplate.getInstanceOf("lvalue");
                     tArray.getType().accept(this);  // Converte o tipo do array pro padrao java: Ex: Char -> char
@@ -776,8 +769,7 @@ public class CPlusPlusVisitor extends Visitor{
                     // Empilha o tipo do array
                     // t.getType().accept(this);
                     // aux.add("type", type);
-                }
-                else{       // Array
+                } else {       // Array
 
                     // Empilha o tipo do array
                     t.getType().accept(this);
@@ -791,11 +783,10 @@ public class CPlusPlusVisitor extends Visitor{
                     aux.add("expr", expr);
                 }
             } else { // new Int; -- new Float; -- new Char; -- new data;
-                if(t.getType() instanceof NameType){    // Se for do tipo Data Adiciona
+                if (t.getType() instanceof NameType) {    // Se for do tipo Data Adiciona
                     t.getType().accept(this);
                     aux.add("type", type);
-                }
-                else{   //new Int; -- new Float; -- new Char
+                } else {   //new Int; -- new Float; -- new Char
                     // Nao faz nada pois a variavel já é instanciada quando as funções são validadas em program
                     aux = null;
                 }
@@ -878,9 +869,9 @@ public class CPlusPlusVisitor extends Visitor{
             type = groupTemplate.getInstanceOf("float_type");
         else if (t instanceof STypeCharacter)
             type = groupTemplate.getInstanceOf("char_type");
-        else if (t instanceof STypeData){
+        else if (t instanceof STypeData) {
             type = groupTemplate.getInstanceOf("data_type");
-            type.add("data", ((STypeData)t).getName()+"*");
+            type.add("data", ((STypeData) t).getName() + "*");
         }
         /*else if (t instanceof STyArr){ // Caso especial de matriz
             ST aux = groupTemplate.getInstanceOf("lvalue");
@@ -894,18 +885,18 @@ public class CPlusPlusVisitor extends Visitor{
 
     }
 
-    private void adjustSTyArr(STypeArray t){
+    private void adjustSTyArr(STypeArray t) {
         List<ST> array = new ArrayList<ST>();   // Lista dos arrays
         SType tipoArray = t;    // Utiliza uma cópia de t, pois será atualizado
         // Adiciona os tipos array em uma lista
         // Exemplo: mat[][] => adiciona mat[]'[]' => depois mat'[]'[]
-        while(tipoArray instanceof STypeArray){
+        while (tipoArray instanceof STypeArray) {
             type = groupTemplate.getInstanceOf("array_type");
             array.add(type);
-            tipoArray = ((STypeArray)tipoArray).getArg();
+            tipoArray = ((STypeArray) tipoArray).getArg();
         }
         // Pega do elemento mais externo para o mais interno que será o tipo do array
-        for(int i = 1; i < array.size(); i++){  // Ajusta o tipo caso tenha array de array
+        for (int i = 1; i < array.size(); i++) {  // Ajusta o tipo caso tenha array de array
             ST aux = array.get(i);
             aux.add("type", array.get(i - 1));
         }
