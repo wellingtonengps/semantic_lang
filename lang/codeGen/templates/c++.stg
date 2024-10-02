@@ -3,9 +3,9 @@ group cPlusPlus;
 program(name, funcPrototypes, funcs, datas) ::= <<
     #include \<iostream>
 
-    <datas; separator="\n\n">
-
     <funcPrototypes; separator="\n">
+
+    <datas; separator="\n\n">
 
     <funcs; separator="\n\n">
 
@@ -22,6 +22,7 @@ class <name>
 funcPrototype(type, name, params) ::= <<
 <type> <name>(<params; separator=", ">);
 >>
+
 
 func(type, name, params, decl, stmt) ::= <<
 <type> <name>(<params; separator=", ">) {
@@ -45,7 +46,7 @@ null_type() ::= "null"
 
 //print(expr) ::= "std::cout \<\< <expr> \<\< std::endl;"
 print(expr) ::= "std::cout \<\< <expr>;"
-read(expr) ::= "std::cin \>\> <expr>;"
+read(expr) ::= "std::cin >> <expr>;"
 return(expr) ::= "return <expr>;"
 
 iterate(expr, cmd, loopAtual) ::= <<

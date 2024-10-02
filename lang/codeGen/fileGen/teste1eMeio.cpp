@@ -7,19 +7,15 @@
     int main() {
         int n;
         int q;
-        int quo;
-        int res;
+        int w;
+        int z;
         n = 13;
         q = 5;
-        quo = divMod_retorno_00(n, q);
-        res = divMod_retorno_01(n, q);
-        std::cout << 'Q';
+        w = divMod_retorno_01(n, q);
+        z = ((2 * w) + 1);
+        std::cout << 'Z';
         std::cout << ':';
-        std::cout << quo;
-        std::cout << '\n';
-        std::cout << 'R';
-        std::cout << ':';
-        std::cout << res;
+        std::cout << z;
         std::cout << '\n';
         return 0;
     }

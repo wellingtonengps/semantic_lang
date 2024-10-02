@@ -1,9 +1,8 @@
     #include <iostream>
 
-
-    bool even_retorno_00();
+    bool even_retorno_00(int n);
     bool odd_retorno_00(int n);
-    int main(int n);
+
 
     bool even_retorno_00(int n) {
         if((n == 0)) {

@@ -249,14 +249,7 @@ public class JavaVisitor extends Visitor {
             funcs.add(fun);
         }
         else{   // 2 retornos
-            /**
-             * Vai adicionar duas funções da seguinte forma:
-             * Exemplo: 
-             *  -- Em lang ==> tipo float e int
-             *  soma(n :: int, n1 :: int): float, int{
-             *  -- Em C++
-             *  float soma_retorno_01(int n, int n1) ||| int soma_retorno_02(int n, int n1)
-             */
+
             idRetorno = 0;
             // Para cada tipo de retorno, será criada uma função diferente
             for(int j = 0; j < f.getReturnTypes().size(); j++){
@@ -457,7 +450,7 @@ public class JavaVisitor extends Visitor {
             aux.add("cmd", stmt);
         }
 
-        loopAtual--;    // Decrementa o indice do loop atual
+        loopAtual--;
         stmt = aux;
     }
 
@@ -547,8 +540,7 @@ public class JavaVisitor extends Visitor {
                 stmt.add("expr", expr);
             }
         } else if (lvalue instanceof DataAccess) {
-            // aceita a expresso e joga pro topo da pilha. vai verificar posteriormente
-            // dentro do dataAccess se casa
+
 
             stmt.add("var", expr);  //lvalue
             // Empilha o tipo da expressao que sera atribuida
@@ -559,24 +551,13 @@ public class JavaVisitor extends Visitor {
 
         // VERIFICA se é TypeInstanciate e sua expr chegou null
         if(expr == null && a.getExp() instanceof TypeInstanciate){
-            // new Int, new Float, new Char;
-            // Não faz nada pois a declaração da variavel de tipos primitivos já foi feita
             stmt = null;    
         }
     }
 
     @Override
     public void visit(FunctionCall f) {
-        // Trata chamadas de função do tipo: fat(10)<q>
-        /**
-         * ---- Regra cmd: ID OPEN_PARENT exps? CLOSE_PARENT (LESS_THAN lvalue (COMMA
-         * lvalue)* GREATER_THAN)? SEMI # FunctionCall
-         * 
-         * Exemplo: divmod(5, 2)<q, r>; // Será retornada 2 valores e armazenados na
-         * variavel q e r
-         * pode ser tbm
-         * divmod(5,2); SEM RETORNO
-         */
+
         ST aux = groupTemplate.getInstanceOf("functionCall");
         String nomeFuncao = f.getId();
 		aux.add("name", nomeFuncao);
@@ -766,9 +747,6 @@ public class JavaVisitor extends Visitor {
         if (t.getType() != null) {
             if (t.getExp() != null) { // Array comum e Array de data
                 if(t.getType() instanceof TypeArray){   // Matriz
-                    // Troca o modo de criação da matriz
-                    // Na Lang: ... new Char[][5]
-                    // Outras linguagens: ... new Char[5][]
 
                     TypeArray tArray = (TypeArray)t.getType();
                     ST lvalue = groupTemplate.getInstanceOf("lvalue");
@@ -781,18 +759,9 @@ public class JavaVisitor extends Visitor {
                     lvalue.add("array", arrayAccess);  
                     aux.add("type", lvalue);    // Adiciona o numero de linhas na frente da declaração
 
-                    // Adiciona uma expressão vazia somente para ter os colchetes das colunas na matriz
                     aux.add("expr", "");
-                    
-                    
-
-                    // Empilha o tipo do array
-                    // t.getType().accept(this);
-                    // aux.add("type", type);
                 }
                 else{       // Array
-
-                    // Empilha o tipo do array
                     t.getType().accept(this);
                     aux.add("type", type);
                     
@@ -812,17 +781,14 @@ public class JavaVisitor extends Visitor {
             }
         }
 
+        if(t.getDataName() != null){
+            aux.add("type", t.getDataName());
+        }
         expr = aux;
     }
 
     @Override
     public void visit(FunctionReturn f) {
-        /************************************************************************************************
-         * MESMO QUE TENHA SOMENTE 1 RETORNO, ELA DEVE SER CHAMADA ASSIM: fat(num−1)[0]                 *
-         * Regra                                                                                        *
-         * pexp: ID OPEN_PARENT exps? CLOSE_PARENT OPEN_BRACKET exp CLOSE_BRACKET  # FunctionReturn     *
-         * // Como retorna 2 valores, logo precisa do funcao(parametros)[indice] Exemplo: fat(num−1)[0] *
-         ***********************************************************************************************/
         ST aux = groupTemplate.getInstanceOf("functionReturn");
         String nomeFuncao = f.getId();
 		aux.add("name", nomeFuncao);
@@ -874,7 +840,6 @@ public class JavaVisitor extends Visitor {
         }
     }
 
-    ////////////// Métodos ///////////
     private void processSType(SType t) {
         if (t instanceof STypeInt)
             type = groupTemplate.getInstanceOf("int_type");
@@ -892,16 +857,15 @@ public class JavaVisitor extends Visitor {
 
     private void adjustSTyArr(STypeArray t){
         List<ST> array = new ArrayList<ST>();   // Lista dos arrays
-        SType tipoArray = t;    // Utiliza uma cópia de t, pois será atualizado
-        // Adiciona os tipos array em uma lista
-        // Exemplo: mat[][] => adiciona mat[]'[]' => depois mat'[]'[]
+        SType tipoArray = t;
+
         while(tipoArray instanceof STypeArray){
             type = groupTemplate.getInstanceOf("array_type");
             array.add(type);
             tipoArray = ((STypeArray)tipoArray).getArg();
         }
-        // Pega do elemento mais externo para o mais interno que será o tipo do array
-        for(int i = 1; i < array.size(); i++){  // Ajusta o tipo caso tenha array de array
+
+        for(int i = 1; i < array.size(); i++){
             ST aux = array.get(i);
             aux.add("type", array.get(i - 1));
         }

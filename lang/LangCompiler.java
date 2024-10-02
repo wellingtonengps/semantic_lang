@@ -5,7 +5,7 @@
 
 package lang;
 
-import lang.codeGen.CPlusPlusVisitor;
+import lang.codeGen.CPPVisitor;
 import lang.codeGen.JavaVisitor;
 import lang.parser.*;
 import lang.ast.*;
@@ -112,17 +112,17 @@ public class LangCompiler {
                 Env<LocalAmbiente<SType>> env = typeCheck.getEnv();
                 String fileName = getFileName(args[1]);
 
-                CPlusPlusVisitor cPlusPlusVisitor;
+                CPPVisitor CPPVisitor;
 
-                cPlusPlusVisitor = new CPlusPlusVisitor(fileName, env, typeCheck.getDatas());
-                ((Node)result).accept(cPlusPlusVisitor);
+                CPPVisitor = new CPPVisitor(fileName, env, typeCheck.getDatas());
+                ((Node)result).accept(CPPVisitor);
 
                 //mostrar na tela o código gerado
                 //System.out.println(cPlusPlusVisitor.getTemplate());
 
                 String filePath = "lang/codeGen/fileGen/" + fileName + ".cpp";
                 System.out.println("Arquivo gerado salvo: " + filePath);
-                writeFile(filePath, cPlusPlusVisitor.getTemplate());
+                writeFile(filePath, CPPVisitor.getTemplate());
             }
             else if(args[0].equals("-j")) {
                 TypeCheckVisitor typeCheck = new TypeCheckVisitor();
